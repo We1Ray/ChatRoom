@@ -1,0 +1,93 @@
+.infoBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #2979ff;
+  border-color: #2979ff;
+  border-radius: 4px 4px 4px 4px;
+  width: 100%;
+}
+
+.leftInnerContainer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  margin-left: 5%;
+  color: white;
+  height: 35px;
+}
+
+.rightInnerContainer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-right: 5%;
+  height: 60px;
+}
+
+.onlineIcon {
+  margin-right: 5%;
+}
+
+.closeIcon {
+  margin-bottom: 30%;
+}
+
+.btn-secondary {
+  padding: 7px;
+  background-color: #2979ff;
+  color: white;
+  border: none;
+}
+
+.a {
+  /* color: white !important; */
+  font-size: 20px;
+}
+
+.searchKeyword {
+  /* display: flex; */
+  /* align-items: center; */
+  background-color: rgb(236, 236, 236);
+  width: 100%;
+}
+
+.form-control .input-rounded {
+  border-radius: 6px 6px 6px 6px;
+  width: 100%;
+}
+
+/* input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+} */
+
+.updown {
+  display: flex;
+  align-items: center;
+}
+
+.fa-angle-up {
+  font-size: 15px;
+}
+
+.fa-angle-down {
+  font-size: 15px;
+}
+
+.backspace {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  background-color: rgb(236, 236, 236);
+}
+
+.fa-times-circle {
+  font-size: 18px;
+}
+
+.c {
+  font-size: 18px;
+}

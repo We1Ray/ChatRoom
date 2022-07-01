@@ -1,0 +1,10 @@
+{
+  "DS": {
+    "database": "postgres",
+    "user": "postgres",
+    "password": "10121012",
+    "port": 5432,
+    "max": 20,
+    "idleTimeoutMillis": 3000
+  }
+}

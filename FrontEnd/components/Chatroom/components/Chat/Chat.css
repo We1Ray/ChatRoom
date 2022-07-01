@@ -1,0 +1,50 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #ffffff;
+  border-radius: 8px;
+  height: 100%;
+  width: 100%;
+}
+
+@media (min-width: 320px) and (max-width: 480px) {
+  .outerContainer {
+    height: 100%;
+  }
+
+  .container {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+@media (min-width: 480px) and (max-width: 1200px) {
+  .container {
+    width: 60%;
+  }
+}
+
+.messages {
+  padding: 5% 0;
+  overflow: auto;
+  flex: auto;
+}
+
+.message-loading {
+  flex: auto;
+  align-items: center;
+  margin: 0px auto;
+}
+
+.notReadMsg {
+  width: 100%;
+  letter-spacing: 0;
+  float: left;
+  font-size: 1.2em;
+  word-wrap: break-word;
+  align-items: center;
+  background-color: #cfcdcd;
+  padding: 3px 3px;
+  cursor: pointer;
+}

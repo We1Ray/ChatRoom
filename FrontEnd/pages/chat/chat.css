@@ -1,0 +1,42 @@
+.btn-primary:hover {
+  background-color: rgb(218, 215, 215) !important;
+}
+
+.btn-secondary:hover {
+  background-color: rgb(218, 215, 215) !important;
+}
+
+.selectBlock {
+  padding: 5px;
+  border: 1px;
+  border-width: 3px;
+  border-color: gray;
+  border-style: solid;
+  width: 300px;
+  height: 500px;
+}
+
+.MessageRoomListBox {
+  overflow-y: overlay;
+  height: 85%;
+}
+
+/* width */
+.MessageRoomListBox::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+.MessageRoomListBox::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* Handle */
+.MessageRoomListBox::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+/* Handle on hover */
+.MessageRoomListBox::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
