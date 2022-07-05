@@ -93,11 +93,11 @@ export default function Member_select_dialog({
               label={{
                 name: "name",
                 api: "/chat/qry_chat_name",
-                result: (value) => {
-                  setMemberName(value);
-                },
               }}
               handleValidation={NotNull_handleValidation}
+              result={(value, disply) => {
+                setMemberName(disply);
+              }}
             />
           </Column>
         </Row>

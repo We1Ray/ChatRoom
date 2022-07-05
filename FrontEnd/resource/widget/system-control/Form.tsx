@@ -3,7 +3,7 @@ import { ComponentContext } from "./ComponentContext";
 import { ProgramContext, statusContext, STATUS } from "./ProgramContext";
 import PublicMethod from "../../methods/PublicMethod";
 import { None } from "../system-ui/None";
-import { SystemContext } from "../system-control/SystemContext";
+import { SystemContext } from "./SystemContext";
 interface Props {
   /**
    * 作業名稱

@@ -102,10 +102,6 @@ interface TextQryBoxProps {
      * 設定外觀
      */
     style?: React.CSSProperties;
-    /**
-     * 元件回傳目前的值
-     */
-    result?: (value: string) => any | ((value: string) => Promise<any>);
   };
   text: {
     /**
@@ -128,7 +124,10 @@ interface TextQryBoxProps {
   /**
    * 元件回傳目前的值
    */
-  result?: (value: string) => any | ((value: string) => Promise<any>);
+  result?: (
+    value: string,
+    display: string
+  ) => any | ((value: string, display: string) => Promise<any>);
   /**
    * 元件的Reference
    */

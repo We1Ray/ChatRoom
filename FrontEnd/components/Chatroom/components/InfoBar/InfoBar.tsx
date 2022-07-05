@@ -3,6 +3,7 @@ import "./InfoBar.css";
 import {
   CallApi,
   Column,
+  None,
   Row,
   SystemContext,
   TextBox,
@@ -16,6 +17,9 @@ import {
   DropdownToggle,
   DropdownItem,
 } from "reactstrap";
+import Group_member_dialog from "./group_member_dialog";
+import Pic_dialog from "./pic_dialog";
+import File_dialog from "./file_dialog";
 
 interface InfoBarProps {
   room: roomProps;
@@ -40,6 +44,9 @@ const InfoBar: React.FC<InfoBarProps> = ({
   >([]);
   const [searchedMessageNumber, setSearchedMessageNumber] = useState(null);
   const [ddOpen, setDdOpen] = useState(false);
+  const [memberDialogOn, setMemberDialogOn] = useState(false);
+  const [picDialogOn, setPicDialogOn] = useState(false);
+  const [fileDialogOn, setFileDialogOn] = useState(false);
 
   const escFunction = useCallback((event) => {
     if (event.key === "Escape") {
@@ -107,6 +114,20 @@ const InfoBar: React.FC<InfoBarProps> = ({
 
   return (
     <>
+      {/* <Group_member_dialog
+        dialogOn={memberDialogOn}
+        setDialogOn={setMemberDialogOn}
+      /> */}
+      <Pic_dialog
+        dialogOn={picDialogOn}
+        setDialogOn={setPicDialogOn}
+        room={room}
+      />
+      <File_dialog
+        dialogOn={fileDialogOn}
+        setDialogOn={setFileDialogOn}
+        room={room}
+      />
       <div className="infoBar">
         <div className="leftInnerContainer">
           <h3
@@ -115,7 +136,7 @@ const InfoBar: React.FC<InfoBarProps> = ({
               marginBottom: "5%",
             }}
           >
-            {room.room_name}{" "}
+            {room.room_name}
             {room.is_group === "Y"
               ? "(" + room.room_member.split(";").length + ")"
               : ""}
@@ -138,15 +159,38 @@ const InfoBar: React.FC<InfoBarProps> = ({
                   {"搜尋關鍵字"}
                 </div>
               </DropdownItem>
+              {room.is_group === "Y" ? (
+                <DropdownItem>
+                  <div
+                    onClick={() => {
+                      setMemberDialogOn(true);
+                    }}
+                  >
+                    <em className="fas fa-users" />
+                    &ensp;
+                    {"群組成員"}
+                  </div>
+                </DropdownItem>
+              ) : (
+                <None />
+              )}
               <DropdownItem>
-                <div onClick={() => {}}>
+                <div
+                  onClick={() => {
+                    setPicDialogOn(true);
+                  }}
+                >
                   <em className="fas fa-image" />
                   &ensp;
                   {"照片"}
                 </div>
               </DropdownItem>
               <DropdownItem>
-                <div onClick={() => {}}>
+                <div
+                  onClick={() => {
+                    setFileDialogOn(true);
+                  }}
+                >
                   <em className="fas fa-file-alt" />
                   &ensp;
                   {"檔案"}

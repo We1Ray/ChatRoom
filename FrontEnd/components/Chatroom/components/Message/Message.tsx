@@ -220,19 +220,18 @@ const Message: React.FC<Props> = ({
       &emsp;
       {file ? (
         isImage ? (
-          <>
+          <div className="messageBox backgroundBlue">
             <img
               src={file.url + "/download"}
               alt={file.name}
+              title={file.name}
               style={{
-                backgroundColor: "black",
                 height: "50px",
                 width: "50px",
                 cursor: "pointer",
               }}
               onClick={(e) => setDialogOn(true)}
             />
-
             <DraggableDialog open={dialogOn}>
               <DialogActions>
                 <Button
@@ -246,13 +245,11 @@ const Message: React.FC<Props> = ({
               </DialogActions>
               <img
                 src={file.url + "/download"}
+                title={file.name}
                 alt={file.name}
-                style={{
-                  backgroundColor: "black",
-                }}
               />
             </DraggableDialog>
-          </>
+          </div>
         ) : (
           <div className="messageBox backgroundBlue">
             <a
@@ -296,12 +293,12 @@ const Message: React.FC<Props> = ({
       &emsp;
       {file ? (
         isImage ? (
-          <>
+          <div className="messageBox backgroundLight">
             <img
               src={file.url + "/download"}
               alt={file.name}
+              title={file.name}
               style={{
-                backgroundColor: "black",
                 height: "50px",
                 width: "50px",
                 cursor: "pointer",
@@ -323,12 +320,10 @@ const Message: React.FC<Props> = ({
               <img
                 src={file.url + "/download"}
                 alt={file.name}
-                style={{
-                  backgroundColor: "black",
-                }}
+                title={file.name}
               />
             </DraggableDialog>
-          </>
+          </div>
         ) : (
           <div className="messageBox backgroundLight">
             <a

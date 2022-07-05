@@ -225,6 +225,44 @@ router.route("/get_room_keyword_seq_messages").post(async (req, res) => {
   );
 });
 
+router.route("/get_room_image_message").post(async (req, res) => {
+  let DBConfig = req.headers.factory ? DataBaseInfo[req.headers.factory] : {};
+  let sql = fs
+    .readFileSync(
+      path.resolve(__dirname, "../sql/chat/get_room_image_message.sql")
+    )
+    .toString();
+
+  await lib.requestAPI(
+    "/get_room_image_message",
+    DBConfig,
+    sql,
+    {
+      room_id: req.body["room_id"] ? req.body["room_id"] : null,
+    },
+    res
+  );
+});
+
+router.route("/get_room_file_message").post(async (req, res) => {
+  let DBConfig = req.headers.factory ? DataBaseInfo[req.headers.factory] : {};
+  let sql = fs
+    .readFileSync(
+      path.resolve(__dirname, "../sql/chat/get_room_file_message.sql")
+    )
+    .toString();
+
+  await lib.requestAPI(
+    "/get_room_file_message",
+    DBConfig,
+    sql,
+    {
+      room_id: req.body["room_id"] ? req.body["room_id"] : null,
+    },
+    res
+  );
+});
+
 router.route("/create_room").post(async (req, res) => {
   let DBConfig = req.headers.factory ? DataBaseInfo[req.headers.factory] : {};
   let sql = fs

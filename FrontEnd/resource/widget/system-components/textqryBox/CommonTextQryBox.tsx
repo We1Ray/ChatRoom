@@ -282,18 +282,7 @@ export const CommonTextQryBox: React.FC<TextQryBoxProps> = forwardRef(
     useEffect(() => {
       try {
         if (result) {
-          result(textboxValue);
-        }
-      } catch (error) {
-        console.log("EROOR: CommonTextQryBox.useEffect[textboxValue]");
-        console.log(error);
-      }
-    }, [textboxValue]);
-
-    useEffect(() => {
-      try {
-        if (label.result) {
-          label.result(labelValue);
+          result(textboxValue, labelValue);
         }
       } catch (error) {
         console.log("EROOR: QryTextQryBox.useEffect[labelValue]");

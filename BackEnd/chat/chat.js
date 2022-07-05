@@ -1,4 +1,4 @@
-const logger = require("../../../BackEnd_PostgreSQL/logger");
+const logger = require("../logger.js");
 
 const { addUser, removeUser, getUser, getUsersInRoom } = require("./users");
 
