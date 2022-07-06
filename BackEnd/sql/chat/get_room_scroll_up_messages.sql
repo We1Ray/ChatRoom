@@ -19,7 +19,7 @@ from
 		cm.message_type,
 		cm.message_content, 
 		cm.send_member, 
-		a."name" send_member_name,
+		a.name || ' (' || a.account || ')' send_member_name,
 		cm.read_member,
 		cm.create_date,
 		cm.message_id,

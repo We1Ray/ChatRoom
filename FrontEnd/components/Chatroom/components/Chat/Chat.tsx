@@ -7,7 +7,6 @@ import Message from "../Message/Message";
 import {
   CallApi,
   None,
-  System,
   SystemContext,
   SystemFunc,
   useLatest,
@@ -21,6 +20,9 @@ let socket = null;
 interface ChatProps {
   room: roomProps;
   user: userProps;
+  updateGroupRoomInfo?: (
+    room: roomProps
+  ) => any | ((room: roomProps) => Promise<any>);
 }
 interface roomProps {
   room_name: string;
@@ -65,6 +67,11 @@ interface fileMessageProps {
   size: number;
 }
 
+interface groupMember {
+  account_uid: string;
+  name: string;
+}
+
 const DateMessage = ({ date }) => (
   <p
     style={{
@@ -81,7 +88,7 @@ const DateMessage = ({ date }) => (
   </p>
 );
 
-const Chat: React.FC<ChatProps> = ({ room, user }) => {
+const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
   const { System } = useContext(SystemContext);
   const [init, setInit] = useState(false); /** 是否初始化 */
   const [users, setUsers] = useState<usersProps[]>(
@@ -113,8 +120,8 @@ const Chat: React.FC<ChatProps> = ({ room, user }) => {
 
   const [messageLoading, setMessageLoading] =
     useState(false); /** 是否要抓取新訊息 */
+  const [dragActive, setDragActive] = React.useState(false);
   const scrollRef = useRef<any>(null);
-
   /**
    *  初始取得聊天紀錄
    */
@@ -543,6 +550,62 @@ const Chat: React.FC<ChatProps> = ({ room, user }) => {
     }
   }, [init, JSON.stringify(messages)]);
 
+  // handle drag events
+  const handleDrag = function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  // triggers when file is dropped
+  const handleDrop = function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      console.log(e.dataTransfer.files);
+      let formData = new FormData();
+      let files = e.dataTransfer.files;
+      for (let index = 0; index < e.dataTransfer.files.length; index++) {
+        formData.append(
+          index.toLocaleString(),
+          files[index],
+          files[index].name
+        );
+      }
+      formData.append("room_id", room.room_id);
+      CallApi.ExecuteApi(
+        System.factory.name,
+        System.factory.ip + "/chat/upload_file",
+        formData
+      )
+        .then(async (res) => {
+          if (res.status === 200) {
+            for (let index = 0; index < res.data.length; index++) {
+              await sendFileMessage({
+                file_id: res.data[index].file_id,
+                name: res.data[index].name,
+                type: res.data[index].type,
+                url: res.data[index].url,
+                path: res.data[index].path,
+                size: res.data[index].size,
+              });
+            }
+          } else {
+            console.log(res);
+          }
+        })
+        .catch((error) => {
+          console.log("EROOR: Chat: /chat/upload_file");
+          console.log(error);
+        });
+    }
+  };
+
   return (
     <div className="container">
       <InfoBar
@@ -558,6 +621,7 @@ const Chat: React.FC<ChatProps> = ({ room, user }) => {
         searchedMessagesList={(searchedMessagesList) => {
           setSearchedMessagesList(searchedMessagesList);
         }}
+        updateGroupRoomInfo={updateGroupRoomInfo}
       />
       {messageLoading ? (
         <div className="message-loading">
@@ -571,7 +635,7 @@ const Chat: React.FC<ChatProps> = ({ room, user }) => {
       ) : (
         <None />
       )}
-      <div className="messages" ref={scrollRef}>
+      <div className="messages" ref={scrollRef} onDragEnter={handleDrag}>
         {socket ? (
           messages.map((message, i) => (
             <div key={i}>
@@ -594,6 +658,15 @@ const Chat: React.FC<ChatProps> = ({ room, user }) => {
           ))
         ) : (
           <None />
+        )}
+        {dragActive && (
+          <div
+            className="drag-file-element"
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          ></div>
         )}
       </div>
       {notReadMsg ? (
@@ -627,4 +700,5 @@ export type {
   usersProps,
   roomProps,
   fileMessageProps,
+  groupMember,
 };

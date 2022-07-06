@@ -1,7 +1,5 @@
 select
-	account,
 	account_uid,
-	email,
 	name || ' (' || account || ')' name
 from
 	accounts a

@@ -63,7 +63,7 @@ left outer join (
 left outer join(
 	select
 		x.room_id ,
-		a."name" last_sender,
+		a.name || ' (' || a.account || ')' last_sender,
 		x.message_id ,
 		x.message_content last_message,
 		x.create_date last_date,
@@ -77,7 +77,9 @@ left outer join(
 			create_date desc) as r,
 			t.*
 		from
-			chat_message t) x,
+			chat_message t
+		where
+			send_member != 'system') x,
 		accounts a
 	where
 		x.r <= 1

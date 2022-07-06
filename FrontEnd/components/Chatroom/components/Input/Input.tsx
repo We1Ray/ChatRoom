@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { Picker } from "emoji-mart";
 import "emoji-mart/css/emoji-mart.css";
 import "./Input.css";
-import { CallApi, CENTER_FACTORY, SystemContext } from "../../../../resource";
+import { CallApi, SystemContext } from "../../../../resource";
 import { fileMessageProps, roomProps } from "../Chat/Chat";
 
 interface inputProps {

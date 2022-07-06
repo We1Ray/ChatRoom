@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import {
   CallApi,
-  CENTER_FACTORY,
   None,
   SystemContext,
   Row,
@@ -288,73 +287,89 @@ const Message: React.FC<Props> = ({
       &emsp;
     </div>
   ) : (
-    <div className="messageContainer justifyStart" ref={messageRef}>
-      <p className="sentText pl-10">{message.send_member_name}</p>
-      &emsp;
-      {file ? (
-        isImage ? (
+    <>
+      {message.send_member === "system" ? (
+        <div
+          className="messageContainer"
+          ref={messageRef}
+          style={{ display: "flex", justifyContent: "center" }}
+        >
           <div className="messageBox backgroundLight">
-            <img
-              src={file.url + "/download"}
-              alt={file.name}
-              title={file.name}
-              style={{
-                height: "50px",
-                width: "50px",
-                cursor: "pointer",
-              }}
-              onClick={(e) => setDialogOn(true)}
-            />
-
-            <DraggableDialog open={dialogOn}>
-              <DialogActions>
-                <Button
-                  onClick={() => setDialogOn(false)}
-                  style={{
-                    backgroundColor: "rgb(171, 219, 241)",
-                  }}
-                >
-                  <i className="fas fa-times" />
-                </Button>
-              </DialogActions>
-              <img
-                src={file.url + "/download"}
-                alt={file.name}
-                title={file.name}
-              />
-            </DraggableDialog>
+            <p className="messageText" style={messageClassType}>
+              <b>{message.message_content}</b>
+            </p>
           </div>
-        ) : (
-          <div className="messageBox backgroundLight">
-            <a
-              className="messageText fileMessage"
-              style={messageClassType}
-              href={file.url + "/download"}
-              download={file.name}
-            >
-              <i className="fas fa-file-alt" />
-              &ensp;
-              {ReplaceSearchMessage(message.message_content)}
-            </a>
-          </div>
-        )
+        </div>
       ) : (
-        <div className="messageBox backgroundLight">
-          <p className="messageText" style={messageClassType}>
-            {ReplaceSearchMessage(message.message_content)}
+        <div className="messageContainer justifyStart" ref={messageRef}>
+          <p className="sentText pl-10">{message.send_member_name}</p>
+          &emsp;
+          {file ? (
+            isImage ? (
+              <div className="messageBox backgroundLight">
+                <img
+                  src={file.url + "/download"}
+                  alt={file.name}
+                  title={file.name}
+                  style={{
+                    height: "50px",
+                    width: "50px",
+                    cursor: "pointer",
+                  }}
+                  onClick={(e) => setDialogOn(true)}
+                />
+
+                <DraggableDialog open={dialogOn}>
+                  <DialogActions>
+                    <Button
+                      onClick={() => setDialogOn(false)}
+                      style={{
+                        backgroundColor: "rgb(171, 219, 241)",
+                      }}
+                    >
+                      <i className="fas fa-times" />
+                    </Button>
+                  </DialogActions>
+                  <img
+                    src={file.url + "/download"}
+                    alt={file.name}
+                    title={file.name}
+                  />
+                </DraggableDialog>
+              </div>
+            ) : (
+              <div className="messageBox backgroundLight">
+                <a
+                  className="messageText fileMessage"
+                  style={messageClassType}
+                  href={file.url + "/download"}
+                  download={file.name}
+                >
+                  <i className="fas fa-file-alt" />
+                  &ensp;
+                  {ReplaceSearchMessage(message.message_content)}
+                </a>
+              </div>
+            )
+          ) : (
+            <div className="messageBox backgroundLight">
+              <p className="messageText" style={messageClassType}>
+                {ReplaceSearchMessage(message.message_content)}
+              </p>
+            </div>
+          )}
+          &emsp;
+          <p
+            style={{
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            {message.hm}
           </p>
         </div>
       )}
-      &emsp;
-      <p
-        style={{
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        {message.hm}
-      </p>
-    </div>
+    </>
   );
 };
 

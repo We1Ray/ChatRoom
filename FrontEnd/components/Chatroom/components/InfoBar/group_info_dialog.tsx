@@ -1,97 +1,94 @@
 import React, { useContext, useEffect, useState } from "react";
 import {
+  Button,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+} from "@material-ui/core";
+import {
   SystemContext,
   Column,
   Row,
   DraggableDialog,
   Label,
   TextBox,
-  BtnSave,
-  BtnCancel,
   CheckBox,
   None,
   CallApi,
-} from "../../resource/index";
+  SystemFunc,
+} from "../../../../resource";
 import "ds-widget/dist/index.css";
-import { DialogActions, DialogContent, DialogTitle } from "@material-ui/core";
-import { groupMember } from "../../components/Chatroom";
+import { roomProps, userProps, groupMember } from "../Chat/Chat";
 
-export default function Member_group_select_dialog({
+interface Group_info_dialog {
+  dialogOn: boolean;
+  setDialogOn: React.Dispatch<React.SetStateAction<boolean>>;
+  user: userProps;
+  room: roomProps;
+  groupMember: groupMember[];
+  updateGroupRoomInfo: (
+    room: roomProps
+  ) => any | ((room: roomProps) => Promise<any>);
+}
+
+const Group_info_dialog: React.FC<Group_info_dialog> = ({
   dialogOn,
   setDialogOn,
   user,
-  setSelectMembers,
-}) {
+  room,
+  groupMember,
+  updateGroupRoomInfo,
+}) => {
   const { System } = useContext(SystemContext);
   const [groupMemberList, setGroupMemberList] = useState<groupMember[]>([]);
+  const [groupName, setGrouphName] = useState(room.room_name);
   const [groupSearchName, setGroupSearchName] = useState("");
   const [selectMemberSearchName, setSelectMemberSearchName] = useState("");
-  const [selectDisplayList, setSelectDisplayList] = useState<groupMember[]>([]);
-  const [selectGroupMember, setSelectGroupMember] = useState<groupMember[]>([]);
+  const [selectDisplayList, setSelectDisplayList] =
+    useState<groupMember[]>(groupMember);
+  const [selectGroupMember, setSelectGroupMember] =
+    useState<groupMember[]>(groupMember);
   const [notSelectGroupMemberList, setNotSelectGroupMemberList] = useState<
     groupMember[]
   >([]);
 
   useEffect(() => {
-    if (user) {
-      CallApi.ExecuteApi(
-        System.factory.name,
-        System.factory.ip + "/chat/get_groupMemberList",
-        {
-          account_uid: user.account_uid,
+    CallApi.ExecuteApi(
+      System.factory.name,
+      System.factory.ip + "/chat/get_groupMemberList",
+      {
+        account_uid: user.account_uid,
+      }
+    )
+      .then((res) => {
+        if (res.status === 200) {
+          setGroupMemberList(res.data);
         }
-      )
-        .then((res) => {
-          if (res.status === 200) {
-            setGroupMemberList(res.data);
-          }
-        })
-        .catch((error) => {
-          console.log("EROOR: Chat: /chat/get_groupMemberList");
-          console.log(error);
-        });
-    } else {
-      setGroupMemberList([]);
-    }
-  }, [JSON.stringify(user)]);
+      })
+      .catch((error) => {
+        console.log("EROOR: Chat: /chat/get_groupMemberList");
+        console.log(error);
+      });
+  }, []);
 
-  /**
-   * 初始化群組人員名單(沒被選擇)
-   */
   useEffect(() => {
-    setNotSelectGroupMemberList(groupMemberList.slice(0, 99));
-  }, [JSON.stringify(groupMemberList)]);
+    setSelectGroupMember(groupMember);
+  }, [JSON.stringify(groupMember)]);
 
   /**
    * 查詢關鍵字重新查詢群組人員名單(沒被選擇)
    */
   useEffect(() => {
-    if (user) {
-      if (groupSearchName === "") {
-        setNotSelectGroupMemberList(groupMemberList.slice(0, 99));
-      } else {
-        setNotSelectGroupMemberList(
-          groupMemberList.filter((value) =>
-            value.name ? value.name.includes(groupSearchName) : false
-          )
-        );
-      }
-    }
-  }, [groupSearchName]);
-
-  useEffect(() => {
-    if (!dialogOn) {
+    if (groupSearchName === "") {
       setNotSelectGroupMemberList(groupMemberList.slice(0, 99));
-      setSelectGroupMember([]);
-      setSelectDisplayList([]);
+    } else {
+      setNotSelectGroupMemberList(
+        groupMemberList.filter((value) =>
+          value.name ? value.name.includes(groupSearchName) : false
+        )
+      );
     }
-  }, [dialogOn]);
-
-  useEffect(() => {
-    if (setSelectMembers) {
-      setSelectMembers(selectGroupMember);
-    }
-  }, [JSON.stringify(selectGroupMember)]);
+  }, [groupSearchName, JSON.stringify(groupMemberList)]);
 
   useEffect(() => {
     if (selectMemberSearchName === "") {
@@ -104,14 +101,6 @@ export default function Member_group_select_dialog({
       );
     }
   }, [selectMemberSearchName, JSON.stringify(selectGroupMember)]);
-
-  async function NotNull_handleValidation(value: string) {
-    let msg = "";
-    if (!value) {
-      msg = System.getLocalization("Public", "ErrorMsgEmpty");
-      return msg;
-    }
-  }
 
   function select(value: string, text: string) {
     if (value !== "") {
@@ -135,6 +124,132 @@ export default function Member_group_select_dialog({
     }
   }
 
+  function insert_system_room_add_remove_message(
+    roomMember: string,
+    newName: string
+  ) {
+    let addMember = selectGroupMember.filter(
+      (member) =>
+        groupMember.findIndex(
+          (value) => value.account_uid === member.account_uid
+        ) < 0
+    );
+    let removeMember = groupMember.filter(
+      (member) =>
+        selectGroupMember.findIndex(
+          (value) => value.account_uid === member.account_uid
+        ) < 0
+    );
+
+    if (addMember.length > 0 || removeMember.length > 0) {
+      let addMessage = "";
+      if (addMember.length > 0) {
+        addMessage = user.name + "已將";
+        for (let index = 0; index < addMember.length; index++) {
+          addMessage += addMember[index].name + ",";
+        }
+        addMessage =
+          addMessage.substring(0, addMessage.length - 1) + "加入群組";
+      }
+
+      let removeMessage = "";
+      if (removeMember.length > 0) {
+        removeMessage = user.name + "已將";
+        for (let index = 0; index < removeMember.length; index++) {
+          removeMessage += removeMember[index].name + ",";
+        }
+        removeMessage =
+          removeMessage.substring(0, removeMessage.length - 1) + "移出群組";
+      }
+
+      CallApi.ExecuteApi(
+        System.factory.name,
+        System.factory.ip + "/chat/insert_room_message",
+        {
+          room_id: room.room_id,
+          message_id: "Msg-" + SystemFunc.uuid(),
+          message_type: "string",
+          message_content:
+            addMessage !== "" && removeMessage !== ""
+              ? `${addMessage}
+${removeMessage}`
+              : addMessage !== ""
+              ? `${addMessage}`
+              : `${removeMessage}`,
+          send_member: "system",
+        }
+      )
+        .then((res) => {
+          if (res.status === 200) {
+            let newGroupMembers = room;
+            newGroupMembers.room_name = groupName;
+            newGroupMembers.room_member = roomMember;
+            updateGroupRoomInfo(newGroupMembers);
+          }
+        })
+        .catch((error) => {
+          console.log("EROOR: Chat: /chat/insert_room_message");
+          console.log(error);
+        });
+    } else if (newName == "") {
+      let newGroupMembers = room;
+      newGroupMembers.room_name = groupName;
+      newGroupMembers.room_member = roomMember;
+      updateGroupRoomInfo(newGroupMembers);
+    }
+  }
+
+  function updateRoomInfo() {
+    let roomMember = "";
+    for (let index = 0; index < selectGroupMember.length; index++) {
+      roomMember += selectGroupMember[index].account_uid + ";";
+    }
+    roomMember = roomMember.substring(0, roomMember.length - 1);
+    CallApi.ExecuteApi(
+      System.factory.name,
+      System.factory.ip + "/chat/update_room_group_info",
+      {
+        room_id: room.room_id,
+        room_name: groupName,
+        room_member: roomMember,
+      }
+    )
+      .then((res) => {
+        if (res.status === 200) {
+          let newName = room.room_name !== groupName ? groupName : "";
+          if (newName !== "") {
+            CallApi.ExecuteApi(
+              System.factory.name,
+              System.factory.ip + "/chat/insert_room_message",
+              {
+                room_id: room.room_id,
+                message_id: "Msg-" + SystemFunc.uuid(),
+                message_type: "string",
+                message_content: `${user.name} 已將群組名稱 ${room.room_name} 更改為 ${groupName}`,
+                send_member: "system",
+              }
+            )
+              .then((res) => {
+                if (res.status === 200) {
+                  insert_system_room_add_remove_message(roomMember, newName);
+                }
+              })
+              .catch((error) => {
+                console.log("EROOR: Chat: /chat/insert_room_message");
+                console.log(error);
+              });
+          } else {
+            insert_system_room_add_remove_message(roomMember, newName);
+          }
+        }
+      })
+      .catch((error) => {
+        console.log("EROOR: Chat: /chat/update_room_group_info");
+        console.log(error);
+      });
+    setDialogOn(false);
+  }
+
   return (
     <DraggableDialog open={dialogOn} style={{ width: "auto", height: "auto" }}>
       <Row>
@@ -144,7 +259,7 @@ export default function Member_group_select_dialog({
           }}
         >
           <DialogTitle>
-            <b>建立群組</b>
+            <b>修改群組人員</b>
           </DialogTitle>
         </Column>
         <DialogActions>
@@ -155,35 +270,33 @@ export default function Member_group_select_dialog({
               alignItems: "center",
             }}
           >
-            <BtnCancel
-              style={{
-                backgroundColor: "white",
-              }}
-              childObject={
-                <h4
-                  className="fas fa-times"
-                  style={{
-                    color: "gray",
-                  }}
-                />
-              }
-              onClick={async () => {
+            <Button
+              onClick={() => {
                 setDialogOn(false);
               }}
-            />
+            >
+              <h4
+                className="fas fa-times"
+                style={{
+                  color: "gray",
+                }}
+              />
+            </Button>
           </Column>
         </DialogActions>
       </Row>
       <DialogContent>
         <Row>
           <Column>
-            <Label bind={true} name="group_name">
+            <Label bind={true} name="group_member">
               群組名稱
             </Label>
             <TextBox
-              name="group_name"
-              bind={true}
-              handleValidation={NotNull_handleValidation}
+              maxLength={60}
+              defaultValue={groupName}
+              result={(value) => {
+                setGrouphName(value);
+              }}
             />
           </Column>
         </Row>
@@ -306,6 +419,9 @@ export default function Member_group_select_dialog({
                                 notCheckedValue={""}
                                 defaultValue={object.account_uid}
                                 result={unselect}
+                                disabled={
+                                  object.account_uid === user.account_uid
+                                }
                               />
                             </Row>
                           </Column>
@@ -322,24 +438,23 @@ export default function Member_group_select_dialog({
         </Row>
       </DialogContent>
       <DialogActions>
-        <BtnSave
+        <Button
           style={{
-            backgroundColor: "white",
             display: "flex",
             alignItems: "center",
-            cursor: "pointer",
           }}
-          childObject={
-            <i
-              className="fas fa-check"
-              title="建立群組"
-              style={{
-                color: "green",
-              }}
-            />
-          }
-        />
+          onClick={() => updateRoomInfo()}
+        >
+          <i
+            className="fas fa-check"
+            title="儲存"
+            style={{
+              color: "green",
+            }}
+          />
+        </Button>
       </DialogActions>
     </DraggableDialog>
   );
-}
+};
+export default Group_info_dialog;

@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import io from "socket.io-client";
 import { Collapse } from "reactstrap";
-import { Chat } from "../../components/Chatroom";
+import { Chat, groupMember } from "../../components/Chatroom";
 import {
   None,
   ProgramProvider,
@@ -47,11 +47,7 @@ interface roomList {
   last_hm: string;
 }
 
-interface groupMember {
-  account_uid: string;
-  name: string;
-}
-export type { roomList, groupMember };
+export type { roomList };
 
 export default function ChatRoom() {
   return (
@@ -68,18 +64,13 @@ function ChatRoom_Content() {
   const { Program } = useContext(ProgramContext);
   const [user, setUser] = useState<userProps>(null);
   const [room, setRoom] = useState<roomProps>(null);
-  const [key, setKey] = useState("");
+  const [roomKey, setRoomKey] = useState("");
   const [roomList, setRoomList] = useState<roomList[]>([]);
   const [newMessage, setNewMessage] = useState(null);
   const [addGroupChatRoomOn, setAddGroupChatRoomOn] = useState(false);
   const [addChatRoomOn, setAddChatRoomOn] = useState(false);
   const [memberName, setMemberName] = useState("");
-  const [groupMemberList, setGroupMemberList] = useState<groupMember[]>([]);
-  const [groupSearchName, setGroupSearchName] = useState("");
-  const [notSelectGroupMemberList, setNotSelectGroupMemberList] = useState<
-    groupMember[]
-  >([]);
-  const [selectGroupMember, setSelectGroupMember] = useState<groupMember[]>([]);
+  const [selectMembers, setSelectMembers] = useState<groupMember[]>([]);
 
   /**
    * 取得使用者資訊
@@ -129,30 +120,6 @@ function ChatRoom_Content() {
           console.log(error);
         });
 
-      CallApi.ExecuteApi(
-        System.factory.name,
-        System.factory.ip + "/chat/get_groupMemberList",
-        {
-          account_uid: user.account_uid,
-        }
-      )
-        .then((res) => {
-          if (res.status === 200) {
-            let groupMember = [];
-            for (let index = 0; index < res.data.length; index++) {
-              groupMember.push({
-                account_uid: res.data[index]["account_uid"],
-                name: res.data[index]["name"],
-              });
-            }
-            setGroupMemberList(groupMember);
-          }
-        })
-        .catch((error) => {
-          console.log("EROOR: Chat: /chat/get_groupMemberList");
-          console.log(error);
-        });
-
       socket.emit(
         "join",
         {
@@ -171,7 +138,6 @@ function ChatRoom_Content() {
       );
     } else {
       setRoomList([]);
-      setGroupMemberList([]);
     }
   }, [JSON.stringify(user)]);
 
@@ -259,46 +225,12 @@ function ChatRoom_Content() {
    */
   useEffect(() => {
     if (room) {
-      setKey(SystemFunc.uuid());
+      setRoomKey(SystemFunc.uuid());
       inRoomUpdateMessageCount(room);
     } else {
-      setKey("");
+      setRoomKey("");
     }
   }, [JSON.stringify(room)]);
-
-  /**
-   * 初始化群組人員名單(沒被選擇)
-   */
-  useEffect(() => {
-    setNotSelectGroupMemberList(groupMemberList.slice(0, 99));
-  }, [JSON.stringify(groupMemberList)]);
-
-  /**
-   * 查詢關鍵字重新查詢群組人員名單(沒被選擇)
-   */
-  useEffect(() => {
-    if (user) {
-      if (groupSearchName === "") {
-        setNotSelectGroupMemberList(groupMemberList.slice(0, 99));
-      } else {
-        setNotSelectGroupMemberList(
-          groupMemberList.filter((value) =>
-            value.name ? value.name.includes(groupSearchName) : false
-          )
-        );
-      }
-    }
-  }, [JSON.stringify(groupSearchName)]);
-
-  /**
-   * 查詢關鍵字重新查詢群組人員名單(沒被選擇)
-   */
-  useEffect(() => {
-    if (!addGroupChatRoomOn) {
-      setNotSelectGroupMemberList(groupMemberList.slice(0, 99));
-      setSelectGroupMember([]);
-    }
-  }, [addGroupChatRoomOn]);
 
   async function createRoom() {
     let flag = false;
@@ -354,8 +286,8 @@ function ChatRoom_Content() {
   async function createGroupRoom() {
     let flag = false;
     let room_member = user.account_uid;
-    for (let index = 0; index < selectGroupMember.length; index++) {
-      room_member = room_member + ";" + selectGroupMember[index].account_uid;
+    for (let index = 0; index < selectMembers.length; index++) {
+      room_member = room_member + ";" + selectMembers[index].account_uid;
     }
     if (addGroupChatRoomOn) {
       let room_id = "chat-" + SystemFunc.uuid();
@@ -404,6 +336,19 @@ function ChatRoom_Content() {
     return flag;
   }
 
+  function updateGroupRoomInfo(newGroupMember: roomProps) {
+    setRoom(newGroupMember);
+    setRoomList((prev) => {
+      let index = prev.findIndex(
+        (value) => value.room_id === newGroupMember.room_id
+      );
+      prev[index].room_name = newGroupMember.room_name;
+      prev[index].room_member = newGroupMember.room_member;
+      return prev;
+    });
+    setRoomKey(SystemFunc.uuid());
+  }
+
   return (
     <Form
       program_code="chat"
@@ -425,10 +370,8 @@ function ChatRoom_Content() {
         <Member_group_select_dialog
           dialogOn={addGroupChatRoomOn}
           setDialogOn={setAddGroupChatRoomOn}
-          setGroupSearchName={setGroupSearchName}
-          notSelectGroupMemberList={notSelectGroupMemberList}
-          selectGroupMember={selectGroupMember}
-          setSelectGroupMember={setSelectGroupMember}
+          user={user}
+          setSelectMembers={setSelectMembers}
         />
         <Row>
           <Column md={3}>
@@ -495,9 +438,13 @@ function ChatRoom_Content() {
             </Collapse>
           </Column>
           <Column md={9}>
-            {key !== "" ? (
-              <div style={{ height: "800px", padding: "10px" }} key={key}>
-                <Chat user={user} room={room} />
+            {roomKey !== "" ? (
+              <div style={{ height: "800px", padding: "10px" }} key={roomKey}>
+                <Chat
+                  user={user}
+                  room={room}
+                  updateGroupRoomInfo={updateGroupRoomInfo}
+                />
               </div>
             ) : (
               <None />

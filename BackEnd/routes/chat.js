@@ -263,6 +263,25 @@ router.route("/get_room_file_message").post(async (req, res) => {
   );
 });
 
+router.route("/get_room_group_member").post(async (req, res) => {
+  let DBConfig = req.headers.factory ? DataBaseInfo[req.headers.factory] : {};
+  let sql = fs
+    .readFileSync(
+      path.resolve(__dirname, "../sql/chat/get_room_group_member.sql")
+    )
+    .toString();
+
+  await lib.requestAPI(
+    "/get_room_group_member",
+    DBConfig,
+    sql,
+    {
+      room_id: req.body["room_id"] ? req.body["room_id"] : null,
+    },
+    res
+  );
+});
+
 router.route("/create_room").post(async (req, res) => {
   let DBConfig = req.headers.factory ? DataBaseInfo[req.headers.factory] : {};
   let sql = fs
@@ -322,6 +341,26 @@ router.route("/update_message_read").post(async (req, res) => {
     {
       room_id: req.body["room_id"] ? req.body["room_id"] : null,
       account_uid: req.body["account_uid"] ? req.body["account_uid"] : null,
+    },
+    res
+  );
+});
+
+router.route("/update_room_group_info").post(async (req, res) => {
+  let DBConfig = req.headers.factory ? DataBaseInfo[req.headers.factory] : {};
+  let sql = fs
+    .readFileSync(
+      path.resolve(__dirname, "../sql/chat/update_room_group_info.sql")
+    )
+    .toString();
+  await lib.requestAPI(
+    "/update_room_group_info",
+    DBConfig,
+    sql,
+    {
+      room_id: req.body["room_id"] ? req.body["room_id"] : null,
+      room_name: req.body["room_name"] ? req.body["room_name"] : null,
+      room_member: req.body["room_member"] ? req.body["room_member"] : null,
     },
     res
   );

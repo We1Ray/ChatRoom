@@ -36,7 +36,9 @@ export default function Member_select_dialog({
             justifyContent: "flex-start",
           }}
         >
-          <DialogTitle>建立聊天</DialogTitle>
+          <DialogTitle>
+            <b>建立聊天</b>
+          </DialogTitle>
         </Column>
         <DialogActions>
           <Column
@@ -108,6 +110,7 @@ export default function Member_select_dialog({
             backgroundColor: "white",
             display: "flex",
             alignItems: "center",
+            cursor: "pointer",
           }}
           childObject={
             <i
