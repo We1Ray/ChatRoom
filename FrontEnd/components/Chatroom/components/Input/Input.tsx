@@ -11,6 +11,7 @@ interface inputProps {
   sendMessage: (event?: { preventDefault: () => void }) => void;
   sendFileMessage: (fileMessage: fileMessageProps) => Promise<void>;
   room: roomProps;
+  loadingInputFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const Input: React.FC<inputProps> = ({
@@ -19,6 +20,7 @@ const Input: React.FC<inputProps> = ({
   sendMessage,
   sendFileMessage,
   room,
+  loadingInputFileUpload,
 }) => {
   const { System } = useContext(SystemContext);
   const [showPicker, setShowPicker] = useState(false);
@@ -161,9 +163,10 @@ const Input: React.FC<inputProps> = ({
             multiple={true}
             id="upload-button"
             style={{ display: "none" }}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              handleUpload(event)
-            }
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              loadingInputFileUpload(event);
+              handleUpload(event);
+            }}
           />
         </label>
       </div>

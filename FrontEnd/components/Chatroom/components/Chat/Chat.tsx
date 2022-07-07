@@ -525,7 +525,14 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
               "sendMessage",
               { room: room, message: send_msg, userInfo: user },
               () => {
-                setMessages((prev) => [...prev, ...[send_msg]]);
+                setMessages((prev) => [
+                  ...prev.filter(
+                    (value) =>
+                      !value.message_id.includes("loading-") &&
+                      !(fileMessage.name === value.message_content)
+                  ),
+                  ...[send_msg],
+                ]);
                 setNewMsg(send_msg);
               }
             );
@@ -551,7 +558,11 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
   }, [init, JSON.stringify(messages)]);
 
   // handle drag events
-  const handleDrag = function (e) {
+  const handleDrag = function (e: {
+    preventDefault: () => void;
+    stopPropagation: () => void;
+    type: string;
+  }) {
     e.preventDefault();
     e.stopPropagation();
     if (e.type === "dragenter" || e.type === "dragover") {
@@ -562,12 +573,11 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
   };
 
   // triggers when file is dropped
-  const handleDrop = function (e) {
+  const handleDrop = function (e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      console.log(e.dataTransfer.files);
       let formData = new FormData();
       let files = e.dataTransfer.files;
       for (let index = 0; index < e.dataTransfer.files.length; index++) {
@@ -603,6 +613,84 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
           console.log("EROOR: Chat: /chat/upload_file");
           console.log(error);
         });
+    }
+  };
+
+  const loadingFileUpload = function (e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      let today = new Date();
+      let file = [];
+      for (let index = 0; index < e.dataTransfer.files.length; index++) {
+        let message_id = "loading-" + SystemFunc.uuid();
+        file.push({
+          d:
+            today.getFullYear() +
+            "/" +
+            (today.getMonth() + 1 < 10
+              ? "0" + (today.getMonth() + 1)
+              : today.getMonth() + 1) +
+            "/" +
+            (today.getDate() < 10 ? "0" + today.getDate() : today.getDate()),
+          hm:
+            (today.getHours() < 10
+              ? "0" + today.getHours()
+              : today.getHours()) +
+            ":" +
+            (today.getMinutes() < 10
+              ? "0" + today.getMinutes()
+              : today.getMinutes()),
+          isread: "0",
+          message_id: message_id,
+          message_type: e.dataTransfer.files[index].size,
+          message_content: e.dataTransfer.files[index].name,
+          room_id: room.room_id,
+          file_id: message_id,
+          send_member: user.account_uid,
+          send_member_name: user.name,
+        });
+      }
+      setMessages((prev) => [...prev, ...file]);
+    }
+  };
+
+  const loadingInputFileUpload = function (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
+    if (e.target.files && e.target.files[0]) {
+      let today = new Date();
+      let file = [];
+      for (let index = 0; index < e.target.files.length; index++) {
+        let message_id = "loading-" + SystemFunc.uuid();
+        file.push({
+          d:
+            today.getFullYear() +
+            "/" +
+            (today.getMonth() + 1 < 10
+              ? "0" + (today.getMonth() + 1)
+              : today.getMonth() + 1) +
+            "/" +
+            (today.getDate() < 10 ? "0" + today.getDate() : today.getDate()),
+          hm:
+            (today.getHours() < 10
+              ? "0" + today.getHours()
+              : today.getHours()) +
+            ":" +
+            (today.getMinutes() < 10
+              ? "0" + today.getMinutes()
+              : today.getMinutes()),
+          isread: "0",
+          message_id: message_id,
+          message_type: e.target.files[index].size,
+          message_content: e.target.files[index].name,
+          room_id: room.room_id,
+          file_id: message_id,
+          send_member: user.account_uid,
+          send_member_name: user.name,
+        });
+      }
+      setMessages((prev) => [...prev, ...file]);
     }
   };
 
@@ -665,7 +753,10 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
-            onDrop={handleDrop}
+            onDrop={(e) => {
+              loadingFileUpload(e);
+              handleDrop(e);
+            }}
           ></div>
         )}
       </div>
@@ -688,6 +779,7 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
         setMessage={setMessage}
         sendMessage={sendMessage}
         sendFileMessage={sendFileMessage}
+        loadingInputFileUpload={loadingInputFileUpload}
       />
     </div>
   );

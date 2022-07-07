@@ -39,6 +39,7 @@ const Message: React.FC<Props> = ({
   const [messageClassType, setMessageClassType] = useState({});
   const [file, setFile] = useState<fileMessageProps>(null);
   const [isImage, setIsImage] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [dialogOn, setDialogOn] = useState(false);
 
   const messageRef = useRef(null);
@@ -144,53 +145,59 @@ const Message: React.FC<Props> = ({
   }
 
   useEffect(() => {
-    CallApi.ExecuteApi(
-      System.factory.name,
-      System.factory.ip + "/chat/get_message_state",
-      {
-        room_id: message.room_id,
-        message_id: message.message_id,
-      }
-    )
-      .then((res) => {
-        if (res.status !== 200) {
-          console.log(res);
-        } else {
-          setIsRead(parseInt(res.data[0].isread));
+    if (!message.message_id.includes("loading-")) {
+      CallApi.ExecuteApi(
+        System.factory.name,
+        System.factory.ip + "/chat/get_message_state",
+        {
+          room_id: message.room_id,
+          message_id: message.message_id,
         }
-      })
-      .catch((error) => {
-        console.log("EROOR: Chat: /chat/get_message_state");
-        console.log(error);
-      });
+      )
+        .then((res) => {
+          if (res.status !== 200) {
+            console.log(res);
+          } else {
+            setIsRead(parseInt(res.data[0].isread));
+          }
+        })
+        .catch((error) => {
+          console.log("EROOR: Chat: /chat/get_message_state");
+          console.log(error);
+        });
+    }
   }, [JSON.stringify(users), JSON.stringify(message)]);
 
   useEffect(() => {
     if (message.message_type !== "string") {
-      CallApi.ExecuteApi(
-        System.factory.name,
-        System.factory.ip + "/file/get_file",
-        {
-          file_id: message.file_id,
-        }
-      )
-        .then((res) => {
-          if (res.status === 200) {
-            setFile(res.data[0]);
+      if (!message.message_id.includes("loading-")) {
+        CallApi.ExecuteApi(
+          System.factory.name,
+          System.factory.ip + "/file/get_file",
+          {
+            file_id: message.file_id,
           }
-        })
-        .catch((error) => {
-          console.log("EROOR: Chat: /file/get_file");
-          console.log(error);
-        });
-      if (message.message_type) {
-        if (message.message_type.indexOf("image") > -1) {
-          setIsImage(true);
+        )
+          .then((res) => {
+            if (res.status === 200) {
+              setFile(res.data[0]);
+            }
+          })
+          .catch((error) => {
+            console.log("EROOR: Chat: /file/get_file");
+            console.log(error);
+          });
+        if (message.message_type) {
+          if (message.message_type.indexOf("image") > -1) {
+            setIsImage(true);
+          } else {
+            setIsImage(false);
+          }
         } else {
           setIsImage(false);
         }
       } else {
-        setIsImage(false);
+        setIsLoading(true);
       }
     } else {
       setFile(null);
@@ -277,6 +284,23 @@ const Message: React.FC<Props> = ({
             </a>
           </div>
         )
+      ) : isLoading ? (
+        <div className="messageBox backgroundBlue">
+          <a className="messageText fileMessage" style={messageClassType}>
+            <Column>
+              <Row>
+                <i className="fas fa-file-alt" style={{ fontSize: "20px" }} />
+                &ensp;
+                {ReplaceSearchMessage(message.message_content)}
+              </Row>
+              <Row style={{ display: "flex", justifyContent: "center" }}>
+                <div className="ball-clip-rotate">
+                  <div></div>
+                </div>
+              </Row>
+            </Column>
+          </a>
+        </div>
       ) : (
         <div className="messageBox backgroundBlue">
           <p className="messageText" style={messageClassType}>
