@@ -528,8 +528,10 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
                 setMessages((prev) => [
                   ...prev.filter(
                     (value) =>
-                      !value.message_id.includes("loading-") &&
-                      !(fileMessage.name === value.message_content)
+                      !(
+                        value.message_id.includes("loading-") &&
+                        fileMessage.name === value.message_content
+                      )
                   ),
                   ...[send_msg],
                 ]);

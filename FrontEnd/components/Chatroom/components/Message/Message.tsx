@@ -145,7 +145,7 @@ const Message: React.FC<Props> = ({
   }
 
   useEffect(() => {
-    if (!message.message_id.includes("loading-")) {
+    if (!isLoading) {
       CallApi.ExecuteApi(
         System.factory.name,
         System.factory.ip + "/chat/get_message_state",
@@ -166,11 +166,14 @@ const Message: React.FC<Props> = ({
           console.log(error);
         });
     }
-  }, [JSON.stringify(users), JSON.stringify(message)]);
+  }, [JSON.stringify(users), JSON.stringify(message), isLoading]);
 
   useEffect(() => {
-    if (message.message_type !== "string") {
-      if (!message.message_id.includes("loading-")) {
+    if (message.message_id.includes("loading-")) {
+      setIsLoading(true);
+    } else {
+      setIsLoading(false);
+      if (message.message_type !== "string") {
         CallApi.ExecuteApi(
           System.factory.name,
           System.factory.ip + "/file/get_file",
@@ -197,10 +200,8 @@ const Message: React.FC<Props> = ({
           setIsImage(false);
         }
       } else {
-        setIsLoading(true);
+        setFile(null);
       }
-    } else {
-      setFile(null);
     }
   }, [JSON.stringify(message)]);
 
