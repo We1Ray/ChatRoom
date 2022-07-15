@@ -5,10 +5,11 @@ insert
 	message_id,
 	message_type,
 	message_seq,
-	message_content,
 	send_member,
 	read_member,
+	message_content,
 	file_id,
+	reply_message_id,
 	create_date)
 select
 	${room_id},
@@ -22,8 +23,9 @@ select
 		chat_message cm
 	where
 		room_id = ${room_id}) as message_seq,
-	${message_content} ,	
 	${send_member},
 	null,
+	${message_content} ,
 	${file_id},
+	${reply_message_id},
 	now()

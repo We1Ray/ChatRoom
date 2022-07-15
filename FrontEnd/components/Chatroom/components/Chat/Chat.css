@@ -49,6 +49,18 @@
   cursor: pointer;
 }
 
+.replyMessage {
+  width: 100%;
+  letter-spacing: 0;
+  float: left;
+  font-size: 1.2em;
+  word-wrap: break-word;
+  align-items: center;
+  background-color: #adabab;
+  padding: 3px 3px;
+  cursor: pointer;
+}
+
 .drag-file-element {
   position: absolute;
   width: 100%;

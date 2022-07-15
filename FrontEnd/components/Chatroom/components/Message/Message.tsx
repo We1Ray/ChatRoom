@@ -1,4 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
+import Crypto from "crypto-js";
+import { Button, DialogActions } from "@material-ui/core";
 import {
   CallApi,
   None,
@@ -7,32 +9,39 @@ import {
   Column,
   DraggableDialog,
 } from "../../../../resource";
-import "./Message.css";
 import {
   messageProps,
   userProps,
   usersProps,
   fileMessageProps,
 } from "../Chat/Chat";
-import Crypto from "crypto-js";
-import { Button, DialogActions } from "@material-ui/core";
+import "./Message.css";
+import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";
 
 interface Props {
   message: messageProps;
+  previousMessage?: messageProps;
   user: userProps;
   users: usersProps[];
   searchedValue: string;
   searchedMessage?: messageProps;
   searchedMessagesList?: messageProps[];
+  replyMessage?: (message: messageProps) => any;
+  clickReplyMessage?: messageProps;
+  setClickReplyMessage?: (message: messageProps) => any;
 }
 
 const Message: React.FC<Props> = ({
   message,
+  previousMessage,
   user,
   users,
   searchedValue,
   searchedMessage,
   searchedMessagesList,
+  replyMessage,
+  clickReplyMessage,
+  setClickReplyMessage,
 }) => {
   const { System } = useContext(SystemContext);
   const [isRead, setIsRead] = useState(message ? parseInt(message.isread) : 0);
@@ -41,8 +50,43 @@ const Message: React.FC<Props> = ({
   const [isImage, setIsImage] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [dialogOn, setDialogOn] = useState(false);
+  const [reply_Message, setReply_Message] = useState<messageProps>(null);
 
   const messageRef = useRef(null);
+
+  useEffect(() => {
+    if (message.reply_message_id) {
+      CallApi.ExecuteApi(
+        System.factory.name,
+        System.factory.ip + "/chat/get_message",
+        {
+          message_id: message.reply_message_id,
+        }
+      )
+        .then((res) => {
+          if (res.status !== 200) {
+            console.log(res);
+          } else {
+            setReply_Message(res.data[0]);
+          }
+        })
+        .catch((error) => {
+          console.log("EROOR: Chat: /chat/get_message_state");
+          console.log(error);
+        });
+    } else {
+      setReply_Message(null);
+    }
+  }, [JSON.stringify(message.reply_message_id)]);
+
+  useEffect(() => {
+    if (clickReplyMessage) {
+      if (message.message_id === clickReplyMessage.message_id) {
+        messageRef.current.scrollIntoView(); /** 設定scrollbar至被查詢的訊息 */
+        setClickReplyMessage(null);
+      }
+    }
+  }, [JSON.stringify(message), JSON.stringify(clickReplyMessage)]);
 
   useEffect(() => {
     if (searchedMessage) {
@@ -108,7 +152,7 @@ const Message: React.FC<Props> = ({
           for (let index = 0; index < statement.length; index++) {
             replace_statement.push(<span>{statement[index]}</span>);
             index + 1 === statement.length
-              ? replace_statement.push(<></>)
+              ? replace_statement.push(<None />)
               : replace_statement.push(
                   <span style={searchValueStyle}>{searchedValue}</span>
                 );
@@ -205,6 +249,42 @@ const Message: React.FC<Props> = ({
     }
   }, [JSON.stringify(message)]);
 
+  function handleContextClick(e, { action, name: id }) {
+    switch (action) {
+      case "copy":
+        if (navigator.clipboard && window.isSecureContext) {
+          // navigator clipboard 向剪贴板写文本
+          navigator.clipboard.writeText(message.message_content);
+        } else {
+          // 创建text area
+          let textArea = document.createElement("textarea");
+          textArea.value = message.message_content;
+          // 使text area不在viewport，同时设置不可见
+          textArea.style.position = "absolute";
+          textArea.style.left = "-999999px";
+          textArea.style.top = "-999999px";
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          new Promise((res, rej) => {
+            // 执行复制命令并移除文本框
+            document.execCommand("copy") ? res : rej;
+            textArea.remove();
+          });
+        }
+        break;
+      case "reply":
+        if (replyMessage) {
+          replyMessage(message);
+        }
+        break;
+      case "back":
+        break;
+      default:
+        break;
+    }
+  }
+
   return message.send_member === user.account_uid ? (
     <div className="messageContainer justifyEnd" ref={messageRef}>
       <p
@@ -225,90 +305,137 @@ const Message: React.FC<Props> = ({
         {message.hm}
       </p>
       &emsp;
-      {file ? (
-        isImage ? (
-          <div className="messageBox backgroundBlue">
+      <div className="messageBox backgroundBlue">
+        <ContextMenu id={isLoading ? "loading" : message.message_id}>
+          <MenuItem data={{ action: "copy" }} onClick={handleContextClick}>
+            <em className="fas fa-clone" />
+            &ensp;
+            {"複製"}
+          </MenuItem>
+          <MenuItem data={{ action: "reply" }} onClick={handleContextClick}>
+            <em className="fas fa-reply" />
+            &ensp;
+            {"回復訊息"}
+          </MenuItem>
+          <MenuItem data={{ action: "back" }} onClick={handleContextClick}>
+            <em className="fas fa-comment-slash" />
+            &ensp;
+            {"收回訊息"}
+          </MenuItem>
+        </ContextMenu>
+        <DraggableDialog open={dialogOn}>
+          <DialogActions>
+            <Button
+              onClick={() => setDialogOn(false)}
+              style={{
+                backgroundColor: "rgb(171, 219, 241)",
+              }}
+            >
+              <i className="fas fa-times" />
+            </Button>
+          </DialogActions>
+          {file ? (
             <img
               src={file.url + "/download"}
-              alt={file.name}
               title={file.name}
-              style={{
-                height: "50px",
-                width: "50px",
-                cursor: "pointer",
-              }}
-              onClick={(e) => setDialogOn(true)}
+              alt={file.name}
             />
-            <DraggableDialog open={dialogOn}>
-              <DialogActions>
-                <Button
-                  onClick={() => setDialogOn(false)}
-                  style={{
-                    backgroundColor: "rgb(171, 219, 241)",
-                  }}
-                >
-                  <i className="fas fa-times" />
-                </Button>
-              </DialogActions>
+          ) : (
+            <None />
+          )}
+        </DraggableDialog>
+        <ContextMenuTrigger id={message.message_id}>
+          {reply_Message ? (
+            <>
+              <div
+                onClick={() => {
+                  setClickReplyMessage(reply_Message);
+                }}
+                style={{
+                  color: "#D4D4D4",
+                  cursor: "pointer",
+                }}
+              >
+                {reply_Message.send_member_name +
+                  ":" +
+                  reply_Message.message_content}
+              </div>
+              <div
+                style={{
+                  width: "100%",
+                  height: "1px",
+                  borderTop: "solid #ACC0D8 1px",
+                  borderColor: "#D4D4D4",
+                }}
+              />
+            </>
+          ) : (
+            <None />
+          )}
+          {file ? (
+            isImage ? (
               <img
                 src={file.url + "/download"}
-                title={file.name}
                 alt={file.name}
+                title={file.name}
+                style={{
+                  height: "50px",
+                  width: "50px",
+                  cursor: "pointer",
+                }}
+                onClick={(e) => setDialogOn(true)}
               />
-            </DraggableDialog>
-          </div>
-        ) : (
-          <div className="messageBox backgroundBlue">
-            <a
-              className="messageText fileMessage"
-              style={messageClassType}
-              href={file.url + "/download"}
-              download={file.name}
-            >
+            ) : (
+              <a
+                className="messageText fileMessage"
+                style={messageClassType}
+                href={file.url + "/download"}
+                download={file.name}
+              >
+                <Column>
+                  <Row>
+                    <i
+                      className="fas fa-file-alt"
+                      style={{ fontSize: "20px" }}
+                    />
+                    &ensp;
+                    {ReplaceSearchMessage(message.message_content)}
+                  </Row>
+                  <Row>
+                    {System.getLocalization("CHAT", "FILE_SIZE") + ": "}
+                    {file.size > 1024
+                      ? file.size > 1048576
+                        ? file.size > 1073741824
+                          ? Math.round(file.size / 1073741824) + "GB"
+                          : Math.round(file.size / 1048576) + "MB"
+                        : Math.round(file.size / 1024) + "KB"
+                      : file.size + "B"}
+                  </Row>
+                </Column>
+              </a>
+            )
+          ) : isLoading ? (
+            <a className="messageText fileMessage" style={messageClassType}>
               <Column>
                 <Row>
                   <i className="fas fa-file-alt" style={{ fontSize: "20px" }} />
                   &ensp;
                   {ReplaceSearchMessage(message.message_content)}
                 </Row>
-                <Row>
-                  {System.getLocalization("CHAT", "FILE_SIZE") + ": "}
-                  {file.size > 1024
-                    ? file.size > 1048576
-                      ? file.size > 1073741824
-                        ? Math.round(file.size / 1073741824) + "GB"
-                        : Math.round(file.size / 1048576) + "MB"
-                      : Math.round(file.size / 1024) + "KB"
-                    : file.size + "B"}
+                <Row style={{ display: "flex", justifyContent: "center" }}>
+                  <div className="ball-clip-rotate">
+                    <div></div>
+                  </div>
                 </Row>
               </Column>
             </a>
-          </div>
-        )
-      ) : isLoading ? (
-        <div className="messageBox backgroundBlue">
-          <a className="messageText fileMessage" style={messageClassType}>
-            <Column>
-              <Row>
-                <i className="fas fa-file-alt" style={{ fontSize: "20px" }} />
-                &ensp;
-                {ReplaceSearchMessage(message.message_content)}
-              </Row>
-              <Row style={{ display: "flex", justifyContent: "center" }}>
-                <div className="ball-clip-rotate">
-                  <div></div>
-                </div>
-              </Row>
-            </Column>
-          </a>
-        </div>
-      ) : (
-        <div className="messageBox backgroundBlue">
-          <p className="messageText" style={messageClassType}>
-            {ReplaceSearchMessage(message.message_content)}
-          </p>
-        </div>
-      )}
+          ) : (
+            <p className="messageText" style={messageClassType}>
+              {ReplaceSearchMessage(message.message_content)}
+            </p>
+          )}
+        </ContextMenuTrigger>
+      </div>
       &emsp;
     </div>
   ) : (
@@ -327,62 +454,87 @@ const Message: React.FC<Props> = ({
         </div>
       ) : (
         <div className="messageContainer justifyStart" ref={messageRef}>
-          <p className="sentText pl-10">{message.send_member_name}</p>
+          <ContextMenu id={isLoading ? "loading" : message.message_id}>
+            <MenuItem data={{ action: "copy" }} onClick={handleContextClick}>
+              <em className="fas fa-clone" />
+              &ensp;
+              {"複製"}
+            </MenuItem>
+            <MenuItem data={{ action: "reply" }} onClick={handleContextClick}>
+              <em className="fas fa-reply" />
+              &ensp;
+              {"回復訊息"}
+            </MenuItem>
+          </ContextMenu>
+          <DraggableDialog open={dialogOn}>
+            <DialogActions>
+              <Button
+                onClick={() => setDialogOn(false)}
+                style={{
+                  backgroundColor: "rgb(171, 219, 241)",
+                }}
+              >
+                <i className="fas fa-times" />
+              </Button>
+            </DialogActions>
+            {file ? (
+              <img
+                src={file.url + "/download"}
+                title={file.name}
+                alt={file.name}
+              />
+            ) : (
+              <None />
+            )}
+          </DraggableDialog>
+          {previousMessage ? (
+            previousMessage.send_member === message.send_member ? (
+              <None />
+            ) : (
+              <>
+                <p className="sentText pl-10">{message.send_member_name}</p>
+              </>
+            )
+          ) : (
+            <>
+              <p className="sentText pl-10">{message.send_member_name}</p>
+            </>
+          )}
           &emsp;
-          {file ? (
-            isImage ? (
-              <div className="messageBox backgroundLight">
-                <img
-                  src={file.url + "/download"}
-                  alt={file.name}
-                  title={file.name}
-                  style={{
-                    height: "50px",
-                    width: "50px",
-                    cursor: "pointer",
-                  }}
-                  onClick={(e) => setDialogOn(true)}
-                />
-
-                <DraggableDialog open={dialogOn}>
-                  <DialogActions>
-                    <Button
-                      onClick={() => setDialogOn(false)}
-                      style={{
-                        backgroundColor: "rgb(171, 219, 241)",
-                      }}
-                    >
-                      <i className="fas fa-times" />
-                    </Button>
-                  </DialogActions>
+          <div className="messageBox backgroundLight">
+            <ContextMenuTrigger id={message.message_id}>
+              {file ? (
+                isImage ? (
                   <img
                     src={file.url + "/download"}
                     alt={file.name}
                     title={file.name}
+                    style={{
+                      height: "50px",
+                      width: "50px",
+                      cursor: "pointer",
+                    }}
+                    onClick={(e) => setDialogOn(true)}
                   />
-                </DraggableDialog>
-              </div>
-            ) : (
-              <div className="messageBox backgroundLight">
-                <a
-                  className="messageText fileMessage"
-                  style={messageClassType}
-                  href={file.url + "/download"}
-                  download={file.name}
-                >
-                  <i className="fas fa-file-alt" />
-                  &ensp;
+                ) : (
+                  <a
+                    className="messageText fileMessage"
+                    style={messageClassType}
+                    href={file.url + "/download"}
+                    download={file.name}
+                  >
+                    <i className="fas fa-file-alt" />
+                    &ensp;
+                    {ReplaceSearchMessage(message.message_content)}
+                  </a>
+                )
+              ) : (
+                <p className="messageText" style={messageClassType}>
                   {ReplaceSearchMessage(message.message_content)}
-                </a>
-              </div>
-            )
-          ) : (
-            <div className="messageBox backgroundLight">
-              <p className="messageText" style={messageClassType}>
-                {ReplaceSearchMessage(message.message_content)}
-              </p>
-            </div>
-          )}
+                </p>
+              )}
+            </ContextMenuTrigger>
+          </div>
           &emsp;
           <p
             style={{

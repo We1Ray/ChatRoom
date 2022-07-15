@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useContext,
+  useCallback,
+} from "react";
 import io from "socket.io-client";
 import Input from "../Input/Input";
 import InfoBar from "../InfoBar/InfoBar";
@@ -43,6 +49,7 @@ interface messageProps {
   file_id: string;
   send_member: string;
   send_member_name: string;
+  reply_message_id: string;
 }
 
 interface userProps {
@@ -121,7 +128,26 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
   const [messageLoading, setMessageLoading] =
     useState(false); /** 是否要抓取新訊息 */
   const [dragActive, setDragActive] = React.useState(false);
+  const [replyMessage, setReplyMessage] =
+    useState<messageProps>(null); /** 回復的訊息 */
+  const [clickReplyMessage, setClickReplyMessage] =
+    useState<messageProps>(null); /** 回復的訊息 */
   const scrollRef = useRef<any>(null);
+
+  const escFunction = useCallback((event) => {
+    if (event.key === "Escape") {
+      setReplyMessage(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener("keydown", escFunction, false);
+
+    return () => {
+      document.removeEventListener("keydown", escFunction, false);
+    };
+  }, []);
+
   /**
    *  初始取得聊天紀錄
    */
@@ -289,6 +315,7 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
           file_id: sendMessage.file_id,
           send_member: userInfo.account_uid,
           send_member_name: userInfo.name,
+          reply_message_id: sendMessage.reply_message_id,
         };
         setMessages((prev) => [...prev, ...[msg]]);
         setNewMsg(msg);
@@ -403,6 +430,49 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
     [JSON.stringify(searchedMessage)]
   );
 
+  useLatest(
+    (latest) => {
+      /**
+       * 設定messages為查詢指定的訊息
+       */
+      async function get_room_keyword_seq_messages() {
+        await CallApi.ExecuteApi(
+          System.factory.name,
+          System.factory.ip + "/chat/get_room_keyword_seq_messages",
+          {
+            room_id: room.room_id,
+            message_id: clickReplyMessage.message_id,
+            current_firsy_message_id: messages[0].message_id,
+          }
+        )
+          .then((res) => {
+            if (res.status === 200 && latest()) {
+              setMessages((prev) => [...res.data, ...prev]);
+            }
+          })
+          .catch((error) => {
+            console.log("EROOR: Chat: /chat/get_room_keyword_seq_messages");
+            console.log(error);
+          })
+          .finally(() => setMessageLoading(false));
+      }
+      if (clickReplyMessage) {
+        if (
+          !messages.find(
+            (element) => element.message_id === clickReplyMessage.message_id
+          )
+        ) {
+          get_room_keyword_seq_messages();
+        } else {
+          setMessageLoading(false);
+        }
+      } else {
+        setMessageLoading(false);
+      }
+    },
+    [JSON.stringify(clickReplyMessage)]
+  );
+
   /**
    * 發送訊息
    */
@@ -420,6 +490,7 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
           message_type: "string",
           message_content: message,
           send_member: user.account_uid,
+          reply_message_id: replyMessage ? replyMessage.message_id : null,
         }
       )
         .then((res) => {
@@ -452,6 +523,7 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
               file_id: null,
               send_member: user.account_uid,
               send_member_name: user.name,
+              reply_message_id: replyMessage ? replyMessage.message_id : null,
             };
 
             socket.emit(
@@ -470,6 +542,11 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
         .catch((error) => {
           console.log("EROOR: Chat: /chat/insert_room_message");
           console.log(error);
+        })
+        .finally(() => {
+          if (replyMessage) {
+            setReplyMessage(null);
+          }
         });
     }
   };
@@ -487,6 +564,7 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
           message_content: fileMessage.name,
           send_member: user.account_uid,
           file_id: fileMessage.file_id,
+          reply_message_id: replyMessage ? replyMessage.message_id : null,
         }
       )
         .then((res) => {
@@ -519,6 +597,7 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
               file_id: fileMessage.file_id,
               send_member: user.account_uid,
               send_member_name: user.name,
+              reply_message_id: replyMessage ? replyMessage.message_id : null,
             };
 
             socket.emit(
@@ -545,6 +624,11 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
         .catch((error) => {
           console.log("EROOR: Chat: /chat/insert_room_message");
           console.log(error);
+        })
+        .finally(() => {
+          if (replyMessage) {
+            setReplyMessage(null);
+          }
         });
     }
   };
@@ -738,11 +822,35 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
               )}
               <Message
                 message={message}
+                previousMessage={
+                  i === 0
+                    ? null
+                    : messages[i - 1].d !== message.d
+                    ? {
+                        d: null,
+                        hm: null,
+                        isread: "0",
+                        message_id: null,
+                        message_type: null,
+                        message_content: null,
+                        room_id: room.room_id,
+                        file_id: null,
+                        send_member: null,
+                        send_member_name: null,
+                        reply_message_id: null,
+                      }
+                    : messages[i - 1]
+                }
                 user={user}
                 users={users}
                 searchedValue={searchedValue}
                 searchedMessage={searchedMessage}
                 searchedMessagesList={searchedMessagesList}
+                replyMessage={(replyMessage) => {
+                  setReplyMessage(replyMessage);
+                }}
+                clickReplyMessage={clickReplyMessage}
+                setClickReplyMessage={setClickReplyMessage}
               />
             </div>
           ))
@@ -759,7 +867,7 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
               loadingFileUpload(e);
               handleDrop(e);
             }}
-          ></div>
+          />
         )}
       </div>
       {notReadMsg ? (
@@ -772,6 +880,24 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
           &ensp;
           {notReadMsg.send_member_name + ": " + notReadMsg.message_content}
         </div>
+      ) : (
+        <None />
+      )}
+      {replyMessage ? (
+        <>
+          <div
+            className="replyMessage"
+            onClick={(e) => {
+              setSearchedMessage(replyMessage);
+            }}
+          >
+            &ensp;
+            {replyMessage.send_member_name +
+              ": " +
+              replyMessage.message_content}
+          </div>
+          <br />
+        </>
       ) : (
         <None />
       )}

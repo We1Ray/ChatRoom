@@ -25,6 +25,7 @@ from
 			else 0
 		end
 		as isread,
+		cm.reply_message_id,
 		cr.is_group
 	from
 		chat_message cm
@@ -39,8 +40,8 @@ from
 	where
 		
 	 cm.room_id = ${room_id}
-	order by
+order by
 		create_date desc
-	limit 15) x
+limit 15) x
 order by
 	create_date asc

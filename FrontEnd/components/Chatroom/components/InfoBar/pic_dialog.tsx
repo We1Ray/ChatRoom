@@ -5,6 +5,7 @@ import {
   Row,
   DraggableDialog,
   CallApi,
+  TextBox,
 } from "../../../../resource";
 import "ds-widget/dist/index.css";
 import { Button, DialogActions, DialogContent } from "@material-ui/core";
@@ -23,6 +24,8 @@ interface pic {
 export default function Pic_dialog({ dialogOn, setDialogOn, room }) {
   const { System } = useContext(SystemContext);
   const [picList, setPicList] = useState<pic[]>([]);
+  const [displayList, setDisplayList] = useState([]);
+  const [searchValue, setSearchValue] = useState("");
   const [selectPicDialogOn, setSelectPicDialogOn] = useState(false);
   const [selectPic, setSelectPic] = useState<pic>({
     file_id: null,
@@ -53,8 +56,20 @@ export default function Pic_dialog({ dialogOn, setDialogOn, room }) {
           console.log("EROOR: Chat: /chat/get_room_image_message");
           console.log(error);
         });
+    } else {
+      setSearchValue("");
     }
   }, [dialogOn]);
+
+  useEffect(() => {
+    if (searchValue == "") {
+      setDisplayList(picList);
+    } else {
+      setDisplayList(
+        picList.filter((value) => value.name.includes(searchValue))
+      );
+    }
+  }, [searchValue, JSON.stringify(picList)]);
 
   return (
     <DraggableDialog
@@ -66,15 +81,32 @@ export default function Pic_dialog({ dialogOn, setDialogOn, room }) {
           style={{
             justifyContent: "flex-start",
           }}
-        />
-        <DialogActions>
-          <Column
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-            }}
-          >
+          md={11}
+        >
+          <DialogActions>
+            <em
+              className="fas fa-search"
+              style={{
+                color: "rgb(197, 197, 197)",
+                fontSize: "16px",
+              }}
+            />
+            <TextBox
+              result={(value) => {
+                setSearchValue(value);
+              }}
+            />
+          </DialogActions>
+        </Column>
+        <Column
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "center",
+          }}
+          md={1}
+        >
+          <DialogActions>
             <Button
               onClick={async () => {
                 setDialogOn(false);
@@ -87,8 +119,8 @@ export default function Pic_dialog({ dialogOn, setDialogOn, room }) {
                 }}
               />
             </Button>
-          </Column>
-        </DialogActions>
+          </DialogActions>
+        </Column>
       </Row>
       <DraggableDialog open={selectPicDialogOn}>
         <DialogActions>
@@ -108,9 +140,9 @@ export default function Pic_dialog({ dialogOn, setDialogOn, room }) {
         />
       </DraggableDialog>
       <DialogContent>
-        {picList.length > 0 ? (
+        {displayList.length > 0 ? (
           <Row>
-            {picList.map((pic, i) => (
+            {displayList.map((pic, i) => (
               <Column lg="4" md="6">
                 <div className="card" data-filter-group="code">
                   <div className="card-body text-center">

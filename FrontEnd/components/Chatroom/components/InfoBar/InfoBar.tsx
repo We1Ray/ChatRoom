@@ -50,7 +50,6 @@ const InfoBar: React.FC<InfoBarProps> = ({
   const [ddOpen, setDdOpen] = useState(false);
   const [groupMemberDialogOn, setGroupMemberDialogOn] = useState(false);
   const [groupMember, setGroupMember] = useState<groupMember[]>([]);
-  const [groupNameDialogOn, setGroupNameDialogOn] = useState(false);
   const [picDialogOn, setPicDialogOn] = useState(false);
   const [fileDialogOn, setFileDialogOn] = useState(false);
 

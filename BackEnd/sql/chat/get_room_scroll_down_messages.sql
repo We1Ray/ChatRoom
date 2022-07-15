@@ -24,6 +24,7 @@ from
 		cm.create_date,
 		cm.message_id,
 		cm.file_id,
+		cm.reply_message_id,
 		case
 			when (cm.read_member is not null)
 			then (

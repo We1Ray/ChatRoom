@@ -105,6 +105,23 @@ router.route("/get_groupMemberList").post(async (req, res) => {
   );
 });
 
+router.route("/get_message").post(async (req, res) => {
+  let DBConfig = req.headers.factory ? DataBaseInfo[req.headers.factory] : {};
+  let sql = fs
+    .readFileSync(path.resolve(__dirname, "../sql/chat/get_message.sql"))
+    .toString();
+
+  await lib.requestAPI(
+    "/get_message",
+    DBConfig,
+    sql,
+    {
+      message_id: req.body["message_id"] ? req.body["message_id"] : null,
+    },
+    res
+  );
+});
+
 router.route("/get_room_current_messages").post(async (req, res) => {
   let DBConfig = req.headers.factory ? DataBaseInfo[req.headers.factory] : {};
   let sql = fs
@@ -322,6 +339,9 @@ router.route("/insert_room_message").post(async (req, res) => {
         : null,
       send_member: req.body["send_member"] ? req.body["send_member"] : null,
       file_id: req.body["file_id"] ? req.body["file_id"] : null,
+      reply_message_id: req.body["reply_message_id"]
+        ? req.body["reply_message_id"]
+        : null,
     },
     res
   );

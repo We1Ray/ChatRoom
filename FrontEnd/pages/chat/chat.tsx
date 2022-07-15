@@ -350,11 +350,7 @@ function ChatRoom_Content() {
   }
 
   return (
-    <Form
-      program_code="chat"
-      dataKey={["room_id"]}
-      style={{ height: "800px", overflow: "hidden" }}
-    >
+    <Form program_code="chat" dataKey={["room_id"]} style={{ height: "800px" }}>
       <BtnQuery
         queryApi={""}
         doQuery={async () => []}

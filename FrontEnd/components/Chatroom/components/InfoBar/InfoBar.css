@@ -42,13 +42,10 @@
 }
 
 .a {
-  /* color: white !important; */
   font-size: 20px;
 }
 
 .searchKeyword {
-  /* display: flex; */
-  /* align-items: center; */
   background-color: rgb(236, 236, 236);
   width: 100%;
 }
@@ -57,12 +54,6 @@
   border-radius: 6px 6px 6px 6px;
   width: 100%;
 }
-
-/* input:focus,
-textarea:focus,
-select:focus {
-  outline: none;
-} */
 
 .updown {
   display: flex;

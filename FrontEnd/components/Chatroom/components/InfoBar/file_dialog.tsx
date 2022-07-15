@@ -5,6 +5,7 @@ import {
   Row,
   DraggableDialog,
   CallApi,
+  TextBox,
 } from "../../../../resource";
 import "ds-widget/dist/index.css";
 import { Button, DialogActions, DialogContent } from "@material-ui/core";
@@ -12,6 +13,8 @@ import { Button, DialogActions, DialogContent } from "@material-ui/core";
 export default function File_dialog({ dialogOn, setDialogOn, room }) {
   const { System } = useContext(SystemContext);
   const [fileList, setFileList] = useState([]);
+  const [displayList, setDisplayList] = useState([]);
+  const [searchValue, setSearchValue] = useState("");
 
   useEffect(() => {
     if (dialogOn) {
@@ -31,8 +34,20 @@ export default function File_dialog({ dialogOn, setDialogOn, room }) {
           console.log("EROOR: Chat: /chat/get_room_file_message");
           console.log(error);
         });
+    } else {
+      setSearchValue("");
     }
   }, [dialogOn]);
+
+  useEffect(() => {
+    if (searchValue == "") {
+      setDisplayList(fileList);
+    } else {
+      setDisplayList(
+        fileList.filter((value) => value.name.includes(searchValue))
+      );
+    }
+  }, [searchValue, JSON.stringify(fileList)]);
 
   return (
     <DraggableDialog
@@ -44,15 +59,32 @@ export default function File_dialog({ dialogOn, setDialogOn, room }) {
           style={{
             justifyContent: "flex-start",
           }}
-        />
-        <DialogActions>
-          <Column
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-            }}
-          >
+          md={11}
+        >
+          <DialogActions>
+            <em
+              className="fas fa-search"
+              style={{
+                color: "rgb(197, 197, 197)",
+                fontSize: "16px",
+              }}
+            />
+            <TextBox
+              result={(value) => {
+                setSearchValue(value);
+              }}
+            />
+          </DialogActions>
+        </Column>
+        <Column
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "center",
+          }}
+          md={1}
+        >
+          <DialogActions>
             <Button
               onClick={async () => {
                 setDialogOn(false);
@@ -65,13 +97,13 @@ export default function File_dialog({ dialogOn, setDialogOn, room }) {
                 }}
               />
             </Button>
-          </Column>
-        </DialogActions>
+          </DialogActions>
+        </Column>
       </Row>
       <DialogContent>
-        {fileList.length > 0 ? (
+        {displayList.length > 0 ? (
           <Row>
-            {fileList.map((file, i) => (
+            {displayList.map((file, i) => (
               <Column lg="4" md="6">
                 <div className="card" data-filter-group="code">
                   <div className="card-body text-center">
