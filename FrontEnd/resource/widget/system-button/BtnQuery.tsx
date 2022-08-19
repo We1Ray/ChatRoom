@@ -328,11 +328,10 @@ export const BtnQuery: React.FC<Props> = ({
     if (
       System.factory.name &&
       System.factory.ip &&
-      queryPermission &&
-      !initialQuery
+      queryPermission 
     ) {
       send(STATUS.QUERY);
-      setInitialQuery(true);
+      // setInitialQuery(true);
     }
   }, [JSON.stringify(System.factory), queryPermission]);
 
