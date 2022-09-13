@@ -27,6 +27,7 @@ interface Props {
   searchedMessage?: messageProps;
   searchedMessagesList?: messageProps[];
   replyMessage?: (message: messageProps) => any;
+  retractMessage?: (message: messageProps) => any;
   clickReplyMessage?: messageProps;
   setClickReplyMessage?: (message: messageProps) => any;
 }
@@ -40,10 +41,12 @@ const Message: React.FC<Props> = ({
   searchedMessage,
   searchedMessagesList,
   replyMessage,
+  retractMessage,
   clickReplyMessage,
   setClickReplyMessage,
 }) => {
   const { System } = useContext(SystemContext);
+  const [thisMessage, setThisMessage] = useState(message);
   const [isRead, setIsRead] = useState(message ? parseInt(message.isread) : 0);
   const [messageClassType, setMessageClassType] = useState({});
   const [file, setFile] = useState<fileMessageProps>(null);
@@ -55,12 +58,16 @@ const Message: React.FC<Props> = ({
   const messageRef = useRef(null);
 
   useEffect(() => {
-    if (message.reply_message_id) {
+    setThisMessage(message);
+  }, [JSON.stringify(message)]);
+
+  useEffect(() => {
+    if (thisMessage.reply_message_id) {
       CallApi.ExecuteApi(
         System.factory.name,
         System.factory.ip + "/chat/get_message",
         {
-          message_id: message.reply_message_id,
+          message_id: thisMessage.reply_message_id,
         }
       )
         .then((res) => {
@@ -77,23 +84,23 @@ const Message: React.FC<Props> = ({
     } else {
       setReply_Message(null);
     }
-  }, [JSON.stringify(message.reply_message_id)]);
+  }, [JSON.stringify(thisMessage.reply_message_id)]);
 
   useEffect(() => {
     if (clickReplyMessage) {
-      if (message.message_id === clickReplyMessage.message_id) {
+      if (thisMessage.message_id === clickReplyMessage.message_id) {
         messageRef.current.scrollIntoView(); /** 設定scrollbar至被查詢的訊息 */
         setClickReplyMessage(null);
       }
     }
-  }, [JSON.stringify(message), JSON.stringify(clickReplyMessage)]);
+  }, [JSON.stringify(thisMessage), JSON.stringify(clickReplyMessage)]);
 
   useEffect(() => {
     if (searchedMessage) {
-      if (message.message_id === searchedMessage.message_id) {
+      if (thisMessage.message_id === searchedMessage.message_id) {
         messageRef.current.scrollIntoView(); /** 設定scrollbar至被查詢的訊息 */
       } else {
-        if (message.send_member === user.account_uid) {
+        if (thisMessage.send_member === user.account_uid) {
           setMessageClassType({
             color: "white",
           });
@@ -104,7 +111,7 @@ const Message: React.FC<Props> = ({
         }
       }
     } else {
-      if (message.send_member === user.account_uid) {
+      if (thisMessage.send_member === user.account_uid) {
         setMessageClassType({
           color: "white",
         });
@@ -115,7 +122,7 @@ const Message: React.FC<Props> = ({
       }
     }
   }, [
-    JSON.stringify(message),
+    JSON.stringify(thisMessage),
     JSON.stringify(searchedMessage),
     JSON.stringify(user),
   ]);
@@ -139,10 +146,10 @@ const Message: React.FC<Props> = ({
     alignItems: "center",
   };
 
-  function ReplaceSearchMessage(text) {
+  function ReplaceSearchMessage(text: string) {
     let replace_statement = [];
-    if (message && searchedMessage && searchedValue !== "") {
-      if (message.message_id === searchedMessage.message_id) {
+    if (thisMessage && searchedMessage && searchedValue !== "") {
+      if (thisMessage.message_id === searchedMessage.message_id) {
         if (text === searchedValue) {
           replace_statement.push(
             <span style={searchValueStyle}>{searchedValue}</span>
@@ -160,7 +167,7 @@ const Message: React.FC<Props> = ({
         }
       } else if (
         searchedMessagesList.find(
-          (element) => element.message_id === message.message_id
+          (element) => element.message_id === thisMessage.message_id
         )
       ) {
         if (text === searchedValue) {
@@ -172,7 +179,7 @@ const Message: React.FC<Props> = ({
           for (let index = 0; index < statement.length; index++) {
             replace_statement.push(<span>{statement[index]}</span>);
             index + 1 === statement.length
-              ? replace_statement.push(<></>)
+              ? replace_statement.push(<None />)
               : replace_statement.push(
                   <span style={searchListStyle}>{searchedValue}</span>
                 );
@@ -194,8 +201,8 @@ const Message: React.FC<Props> = ({
         System.factory.name,
         System.factory.ip + "/chat/get_message_state",
         {
-          room_id: message.room_id,
-          message_id: message.message_id,
+          room_id: thisMessage.room_id,
+          message_id: thisMessage.message_id,
         }
       )
         .then((res) => {
@@ -210,19 +217,19 @@ const Message: React.FC<Props> = ({
           console.log(error);
         });
     }
-  }, [JSON.stringify(users), JSON.stringify(message), isLoading]);
+  }, [JSON.stringify(users), JSON.stringify(thisMessage), isLoading]);
 
   useEffect(() => {
-    if (message.message_id.includes("loading-")) {
+    if (thisMessage.message_id.includes("loading-")) {
       setIsLoading(true);
     } else {
       setIsLoading(false);
-      if (message.message_type !== "string") {
+      if (thisMessage.message_type !== "string") {
         CallApi.ExecuteApi(
           System.factory.name,
           System.factory.ip + "/file/get_file",
           {
-            file_id: message.file_id,
+            file_id: thisMessage.file_id,
           }
         )
           .then((res) => {
@@ -234,8 +241,8 @@ const Message: React.FC<Props> = ({
             console.log("EROOR: Chat: /file/get_file");
             console.log(error);
           });
-        if (message.message_type) {
-          if (message.message_type.indexOf("image") > -1) {
+        if (thisMessage.message_type) {
+          if (thisMessage.message_type.indexOf("image") > -1) {
             setIsImage(true);
           } else {
             setIsImage(false);
@@ -247,18 +254,23 @@ const Message: React.FC<Props> = ({
         setFile(null);
       }
     }
-  }, [JSON.stringify(message)]);
+  }, [JSON.stringify(thisMessage)]);
 
-  function handleContextClick(e, { action, name: id }) {
+  function handleContextClick(
+    e:
+      | React.TouchEvent<HTMLDivElement>
+      | React.MouseEvent<HTMLDivElement, MouseEvent>,
+    { action, name: id }
+  ) {
     switch (action) {
       case "copy":
         if (navigator.clipboard && window.isSecureContext) {
           // navigator clipboard 向剪贴板写文本
-          navigator.clipboard.writeText(message.message_content);
+          navigator.clipboard.writeText(thisMessage.message_content);
         } else {
           // 创建text area
           let textArea = document.createElement("textarea");
-          textArea.value = message.message_content;
+          textArea.value = thisMessage.message_content;
           // 使text area不在viewport，同时设置不可见
           textArea.style.position = "absolute";
           textArea.style.left = "-999999px";
@@ -275,17 +287,51 @@ const Message: React.FC<Props> = ({
         break;
       case "reply":
         if (replyMessage) {
-          replyMessage(message);
+          replyMessage(thisMessage);
         }
         break;
-      case "back":
+      case "retract":
+        CallApi.ExecuteApi(
+          System.factory.name,
+          System.factory.ip + "/chat/retract_message",
+          {
+            message_id: thisMessage.message_id,
+            message_content: user.name + " 已收回訊息",
+            room_id: thisMessage.room_id,
+            file_id: file ? file.file_id : null,
+            path: file ? file.path : null,
+          }
+        )
+          .then((res) => {
+            if (res.status === 200) {
+              setThisMessage((prev) => {
+                prev.message_content = user.name + "已收回訊息";
+                prev.send_member = "system";
+                return prev;
+              });
+              retractMessage(thisMessage);
+            } else {
+              console.log(res);
+            }
+          })
+          .catch((error) => {
+            console.log("EROOR: Chat: /chat/retract_message");
+            console.log(error);
+          });
         break;
       default:
         break;
     }
   }
 
-  return message.send_member === user.account_uid ? (
+  function isValidURL(cointent: string) {
+    var res = cointent.match(
+      /(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g
+    );
+    return res !== null;
+  }
+
+  return thisMessage.send_member === user.account_uid ? (
     <div className="messageContainer justifyEnd" ref={messageRef}>
       <p
         style={{
@@ -302,11 +348,11 @@ const Message: React.FC<Props> = ({
         ) : (
           <None />
         )}
-        {message.hm}
+        {thisMessage.hm}
       </p>
       &emsp;
       <div className="messageBox backgroundBlue">
-        <ContextMenu id={isLoading ? "loading" : message.message_id}>
+        <ContextMenu id={isLoading ? "loading" : thisMessage.message_id}>
           <MenuItem data={{ action: "copy" }} onClick={handleContextClick}>
             <em className="fas fa-clone" />
             &ensp;
@@ -317,7 +363,7 @@ const Message: React.FC<Props> = ({
             &ensp;
             {"回復訊息"}
           </MenuItem>
-          <MenuItem data={{ action: "back" }} onClick={handleContextClick}>
+          <MenuItem data={{ action: "retract" }} onClick={handleContextClick}>
             <em className="fas fa-comment-slash" />
             &ensp;
             {"收回訊息"}
@@ -344,7 +390,7 @@ const Message: React.FC<Props> = ({
             <None />
           )}
         </DraggableDialog>
-        <ContextMenuTrigger id={message.message_id}>
+        <ContextMenuTrigger id={thisMessage.message_id}>
           {reply_Message ? (
             <>
               <div
@@ -358,7 +404,9 @@ const Message: React.FC<Props> = ({
               >
                 {reply_Message.send_member_name +
                   ":" +
-                  reply_Message.message_content}
+                  (reply_Message.message_content.length > 50
+                    ? reply_Message.message_content.substring(0, 49) + " ....."
+                    : reply_Message.message_content)}
               </div>
               <div
                 style={{
@@ -399,7 +447,7 @@ const Message: React.FC<Props> = ({
                       style={{ fontSize: "20px" }}
                     />
                     &ensp;
-                    {ReplaceSearchMessage(message.message_content)}
+                    {ReplaceSearchMessage(thisMessage.message_content)}
                   </Row>
                   <Row>
                     {System.getLocalization("CHAT", "FILE_SIZE") + ": "}
@@ -420,7 +468,7 @@ const Message: React.FC<Props> = ({
                 <Row>
                   <i className="fas fa-file-alt" style={{ fontSize: "20px" }} />
                   &ensp;
-                  {ReplaceSearchMessage(message.message_content)}
+                  {ReplaceSearchMessage(thisMessage.message_content)}
                 </Row>
                 <Row style={{ display: "flex", justifyContent: "center" }}>
                   <div className="ball-clip-rotate">
@@ -431,7 +479,7 @@ const Message: React.FC<Props> = ({
             </a>
           ) : (
             <p className="messageText" style={messageClassType}>
-              {ReplaceSearchMessage(message.message_content)}
+              {ReplaceSearchMessage(thisMessage.message_content)}
             </p>
           )}
         </ContextMenuTrigger>
@@ -440,7 +488,7 @@ const Message: React.FC<Props> = ({
     </div>
   ) : (
     <>
-      {message.send_member === "system" ? (
+      {thisMessage.send_member === "system" ? (
         <div
           className="messageContainer"
           ref={messageRef}
@@ -448,13 +496,13 @@ const Message: React.FC<Props> = ({
         >
           <div className="messageBox backgroundLight">
             <p className="messageText" style={messageClassType}>
-              <b>{message.message_content}</b>
+              <b>{thisMessage.message_content}</b>
             </p>
           </div>
         </div>
       ) : (
         <div className="messageContainer justifyStart" ref={messageRef}>
-          <ContextMenu id={isLoading ? "loading" : message.message_id}>
+          <ContextMenu id={isLoading ? "loading" : thisMessage.message_id}>
             <MenuItem data={{ action: "copy" }} onClick={handleContextClick}>
               <em className="fas fa-clone" />
               &ensp;
@@ -488,21 +536,25 @@ const Message: React.FC<Props> = ({
             )}
           </DraggableDialog>
           {previousMessage ? (
-            previousMessage.send_member === message.send_member ? (
+            previousMessage.send_member === thisMessage.send_member ? (
               <None />
             ) : (
               <>
-                <p className="sentText pl-10">{message.send_member_name}</p>
+                <p className="sentText pl-10">
+                  <b>{thisMessage.send_member_name}</b>
+                </p>
               </>
             )
           ) : (
             <>
-              <p className="sentText pl-10">{message.send_member_name}</p>
+              <p className="sentText pl-10">
+                <b>{thisMessage.send_member_name}</b>
+              </p>
             </>
           )}
           &emsp;
           <div className="messageBox backgroundLight">
-            <ContextMenuTrigger id={message.message_id}>
+            <ContextMenuTrigger id={thisMessage.message_id}>
               {file ? (
                 isImage ? (
                   <img
@@ -525,12 +577,12 @@ const Message: React.FC<Props> = ({
                   >
                     <i className="fas fa-file-alt" />
                     &ensp;
-                    {ReplaceSearchMessage(message.message_content)}
+                    {ReplaceSearchMessage(thisMessage.message_content)}
                   </a>
                 )
               ) : (
                 <p className="messageText" style={messageClassType}>
-                  {ReplaceSearchMessage(message.message_content)}
+                  {ReplaceSearchMessage(thisMessage.message_content)}
                 </p>
               )}
             </ContextMenuTrigger>
@@ -542,7 +594,7 @@ const Message: React.FC<Props> = ({
               alignItems: "center",
             }}
           >
-            {message.hm}
+            {thisMessage.hm}
           </p>
         </div>
       )}

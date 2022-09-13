@@ -3,18 +3,21 @@ select
 	account,
 	account_uid,
 	email,
-	name || ' (' || account || ')' name
+	name || ' (' || account || ')' "name"
 from
 	accounts a
 where
 	 account_uid not in (
 	select
-		distinct unnest(string_to_array(room_member , ';')) account_uid
+		room_member
 	from
-		chat_room cr
+		chat_room cr ,
+		chat_room_member crm
 	where
-		is_group = 'N'
-		and ${account_uid} = any(string_to_array(cr.room_member, ';')))
+		cr.room_id = crm.room_id
+		and is_group = 'N'
+		and room_member = ${account_uid}
+	)
 	and case
 		when ${searchAccount} is not null then (account like '%' || ${searchAccount} || '%'
 			or "name" like '%' || ${searchAccount} || '%' )

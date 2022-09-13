@@ -1,7 +1,7 @@
 select
 	a.account_uid,
 	a.account,
-	a.name || ' (' || a.account || ')' name,
+	a.name || '(' || a.account || ')' "name",
 	a.email
 from
 	account_token at2 ,

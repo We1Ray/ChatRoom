@@ -1,13 +1,12 @@
 insert
 	into
 	chat_room
-(room_member,
-	room_id,
+(room_id,
 	room_name,
 	create_date,
 	is_group,
 	create_user)
-values(${room_member},
+values(
 ${room_id},
 ${room_name},
 now(),

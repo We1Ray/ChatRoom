@@ -20,21 +20,19 @@ from
 		cm.message_content, 
 		cm.send_member, 
 		a.name || ' (' || a.account || ')' send_member_name,
-		cm.read_member,
 		cm.create_date,
 		cm.message_id,
 		cm.file_id,
 		cm.reply_message_id,
-		case
-			when (cm.read_member is not null)
-			then (
-			select
-				count(*)
-			from
-				unnest (string_to_array(cm.read_member, ';')))
-			else 0
-		end
-		as isread,
+		(
+		select
+			count(*)
+		from
+			chat_message_have_read cmhr
+		where
+			room_id = ${room_id}
+			and message_id = cm.message_id
+		) isread,
 		cr.is_group
 	from
 		chat_message cm ,

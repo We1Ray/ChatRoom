@@ -30,7 +30,7 @@ import Room from "./room";
 let socket = null;
 
 interface roomList {
-  room_member: string;
+  room_member: string[];
   room_id: string;
   room_name: string;
   create_date: string;
@@ -236,12 +236,14 @@ function ChatRoom_Content() {
     let flag = false;
     if (addChatRoomOn) {
       let room_id = "chat-" + SystemFunc.uuid();
+      let room_member = [];
+      room_member.push(user.account_uid);
+      room_member.push(Program.insertParameters["member"]);
       CallApi.ExecuteApi(
         System.factory.name,
         System.factory.ip + "/chat/create_room",
         {
-          room_member:
-            user.account_uid + ";" + Program.insertParameters["member"],
+          room_member: room_member,
           room_id: room_id,
           room_name: null,
           is_group: "N",
@@ -252,8 +254,7 @@ function ChatRoom_Content() {
           if (res.status === 200) {
             setRoomList((prev) => [
               {
-                room_member:
-                  user.account_uid + ";" + Program.insertParameters["member"],
+                room_member: room_member,
                 room_id: room_id,
                 room_name: memberName,
                 create_date: now().toString(),
@@ -285,9 +286,10 @@ function ChatRoom_Content() {
 
   async function createGroupRoom() {
     let flag = false;
-    let room_member = user.account_uid;
+    let room_member = [];
+    room_member.push(user.account_uid);
     for (let index = 0; index < selectMembers.length; index++) {
-      room_member = room_member + ";" + selectMembers[index].account_uid;
+      room_member.push(selectMembers[index].account_uid);
     }
     if (addGroupChatRoomOn) {
       let room_id = "chat-" + SystemFunc.uuid();

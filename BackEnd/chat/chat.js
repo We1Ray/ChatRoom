@@ -72,6 +72,45 @@ const chatSever = (io) => {
       }
     });
 
+    socket.on("retractMessage", ({ room, retractMessage, userInfo }) => {
+      const user = getUser(socket.id); //we havve access to socket from above
+      if (!user) {
+        const { error, user } = addUser({
+          id: socket.id,
+          room,
+          userInfo,
+        });
+        if (error) {
+          logger.error("retractMessage", error);
+        } else {
+          io.to(room.room_id).emit("retractMessage", {
+            userInfo: userInfo,
+            retractMessage: retractMessage,
+          });
+
+          io.to("public").emit("retractMessage", {
+            userInfo: user.info,
+            retractMessage: retractMessage,
+            socket_user: socket.id,
+          });
+        }
+      } else {
+        //when the user leaves we send a new message to roomData
+        //we also send users since we need to know the new state of the users in the room;
+        io.to(user.room.room_id).emit("retractMessage", {
+          userInfo: user.info,
+          retractMessage: retractMessage,
+          socket_user: socket.id,
+        });
+
+        io.to("public").emit("retractMessage", {
+          userInfo: user.info,
+          retractMessage: retractMessage,
+          socket_user: socket.id,
+        });
+      }
+    });
+
     //does not take any parameters since we are just unmounting here
     socket.on("disconnect", () => {
       const user = removeUser(socket.id); //remove user when they disconnect

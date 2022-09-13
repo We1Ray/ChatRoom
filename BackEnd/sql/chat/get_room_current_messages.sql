@@ -11,20 +11,18 @@ from
 		cm.message_content, 
 		cm.send_member, 
 		a.name || ' (' || a.account || ')' send_member_name,
-		cm.read_member ,
 		cm.create_date,
 		cm.message_id,
 		cm.file_id,
-		case
-			when (cm.read_member is not null)
-			then (
-			select
-				count(*)
-			from
-				unnest (string_to_array(read_member, ';')))
-			else 0
-		end
-		as isread,
+		(
+		select
+			count(*)
+		from
+			chat_message_have_read cmhr
+		where
+			room_id = ${room_id}
+			and message_id = cm.message_id
+		) isread,
 		cm.reply_message_id,
 		cr.is_group
 	from
@@ -38,10 +36,9 @@ from
 			accounts) a on
 		a.account_uid = cm.send_member
 	where
-		
-	 cm.room_id = ${room_id}
-order by
+		cm.room_id = ${room_id}
+	order by
 		create_date desc
-limit 15) x
+	limit 15) x
 order by
 	create_date asc

@@ -1,4 +1,4 @@
- select
+select
 	distinct cr.*
 from
 	(
@@ -6,6 +6,8 @@ from
 		row_number() over() as row_num_id,
 		cr2.*
 	from
-		chat_room cr2) cr 
+		chat_room cr2) cr,
+	chat_room_member crm
 where
-	${account_uid} = any(string_to_array(cr.room_member, ';'))
+	cr.room_id = crm.room_id
+	and crm.room_member = ${account_uid}

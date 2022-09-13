@@ -34,7 +34,7 @@ interface roomProps {
   room_name: string;
   room_id: string;
   is_group: string;
-  room_member: string;
+  room_member: string[];
 }
 
 interface messageProps {
@@ -274,7 +274,7 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
       ) {
         CallApi.ExecuteApi(
           System.factory.name,
-          System.factory.ip + "/chat/update_message_read",
+          System.factory.ip + "/chat/insert_message_have_read",
           {
             room_id: room.room_id,
             account_uid: user.account_uid,
@@ -286,7 +286,7 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
             }
           })
           .catch((error) => {
-            console.log("EROOR: Chat: /chat/update_message_read");
+            console.log("EROOR: Chat: /chat/insert_message_have_read");
             console.log(error);
           });
         let today = new Date();
@@ -321,6 +321,21 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
         setNewMsg(msg);
       }
     });
+
+    socket.on("retractMessage", ({ retractMessage, userInfo, socket_user }) => {
+      if (retractMessage.room_id === room.room_id) {
+        setMessages((prev) => {
+          let retractMessage_index = prev.findIndex(
+            (v) => v.message_id === retractMessage.message_id
+          );
+          prev[retractMessage_index].message_content =
+            prev[retractMessage_index].send_member_name + "已收回訊息";
+          prev[retractMessage_index].send_member = "system";
+          return prev;
+        });
+      }
+    });
+
     socket.on("roomData", ({ users }) => {
       setUsers(users);
     });
@@ -332,7 +347,7 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
   useEffect(() => {
     CallApi.ExecuteApi(
       System.factory.name,
-      System.factory.ip + "/chat/update_message_read",
+      System.factory.ip + "/chat/insert_message_have_read",
       {
         room_id: room.room_id,
         account_uid: user.account_uid,
@@ -344,7 +359,7 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
         }
       })
       .catch((error) => {
-        console.log("EROOR: Chat: /chat/update_message_read");
+        console.log("EROOR: Chat: /chat/insert_message_have_read");
         console.log(error);
       });
   }, [JSON.stringify(users)]);
@@ -549,6 +564,14 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
           }
         });
     }
+  };
+
+  const sendRetractMessage = (retractMessage: messageProps) => {
+    socket.emit("retractMessage", {
+      room: room,
+      retractMessage: retractMessage,
+      userInfo: user,
+    });
   };
 
   const sendFileMessage = async (fileMessage: fileMessageProps) => {
@@ -848,6 +871,9 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
                 searchedMessagesList={searchedMessagesList}
                 replyMessage={(replyMessage) => {
                   setReplyMessage(replyMessage);
+                }}
+                retractMessage={(retractMessage) => {
+                  sendRetractMessage(retractMessage);
                 }}
                 clickReplyMessage={clickReplyMessage}
                 setClickReplyMessage={setClickReplyMessage}

@@ -167,9 +167,7 @@ const InfoBar: React.FC<InfoBarProps> = ({
             }}
           >
             {room.room_name}
-            {room.is_group === "Y"
-              ? "(" + room.room_member.split(";").length + ")"
-              : ""}
+            {room.is_group === "Y" ? "(" + room.room_member.length + ")" : ""}
           </h3>
         </div>
         <div className="rightInnerContainer">

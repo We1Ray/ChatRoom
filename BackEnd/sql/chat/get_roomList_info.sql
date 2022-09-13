@@ -22,19 +22,29 @@ from
 		(
 		select
 				cr2.*,
-				unnest(string_to_array(room_member , ';')) otherside
+				crm.room_member
 		from
-				chat_room cr2
+				chat_room cr2,
+			(
+			select
+					room_id ,
+					array_agg(room_member) room_member
+			from
+					chat_room_member crm
+			group by
+					room_id
+			) crm
 		where
-			is_group = 'N'
-			and ${account_uid} = any (string_to_array(cr2.room_member, ';'))) NG,
+			cr2.room_id = crm.room_id
+			and is_group = 'N'
+		) NG,
 		accounts a
 	where
-		NG.otherside = a.account_uid
-		and NG.otherside != ${account_uid}
+		 a.account_uid = any(NG.room_member)
+		and a.account_uid != ${account_uid}
 union
 	select
-		cr3.room_member,
+		crm2.room_member,
 		cr3.room_id,
 		cr3.room_name,
 		cr3.create_date,
@@ -43,10 +53,20 @@ union
 		cr3.is_group,
 		cr3.create_user
 	from
-		chat_room cr3
+		chat_room cr3,
+		(
+		select
+					room_id ,
+					array_agg(room_member) room_member
+		from
+					chat_room_member crm
+		group by
+					room_id
+		) crm2
 	where
-		is_group = 'Y'
-		and ${account_uid} = any (string_to_array(cr3.room_member, ';'))) cr
+		cr3.room_id = crm2.room_id
+		and is_group = 'Y'
+		and ${account_uid} = any(crm2.room_member)) cr
 left outer join (
 	select
 		cm.room_id ,
@@ -54,11 +74,17 @@ left outer join (
 	from
 		chat_message cm
 	where
-		(not (${account_uid} = any (string_to_array(cm.read_member, ';')))
-			or read_member is null)
-		and send_member != ${account_uid}
+		 send_member != ${account_uid}
+		and ${account_uid} not in (
+		select
+			cmhr.read_member
+		from
+			chat_message_have_read cmhr
+		where
+			cmhr.room_id = cm.room_id
+			and cmhr.message_id = cm.message_id)
 	group by
-		cm.room_id ) NRM on
+		cm.room_id) NRM on
 	cr.room_id = NRM.room_id
 left outer join(
 	select
@@ -87,7 +113,7 @@ left outer join(
 				)LM on
 	cr.room_id = LM.room_id
 where
-	${account_uid} = any (string_to_array(cr.room_member, ';'))
+	${account_uid} = any (cr.room_member)
 order by
 	last_date desc nulls last,
 	create_date desc nulls last

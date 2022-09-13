@@ -10,14 +10,19 @@ router.route("/get_file").post(async (req, res) => {
     .readFileSync(path.resolve(__dirname, "../sql/file/get_file.sql"))
     .toString();
 
-  await lib.requestAPI(
+  await lib.executeSQL(
     "/get_file",
     DBConfig,
     sql,
     {
       file_id: req.body["file_id"] ? req.body["file_id"] : null,
     },
-    res
+    (response) => {
+      res.send(response.rows);
+    },
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 

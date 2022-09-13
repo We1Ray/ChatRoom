@@ -6,7 +6,6 @@ insert
 	message_type,
 	message_seq,
 	send_member,
-	read_member,
 	message_content,
 	file_id,
 	reply_message_id,
@@ -24,7 +23,6 @@ select
 	where
 		room_id = ${room_id}) as message_seq,
 	${send_member},
-	null,
 	${message_content} ,
 	${file_id},
 	${reply_message_id},

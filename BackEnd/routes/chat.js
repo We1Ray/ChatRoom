@@ -21,14 +21,19 @@ router.route("/get_userInfo").post(async (req, res) => {
     .readFileSync(path.resolve(__dirname, "../sql/chat/get_userInfo.sql"))
     .toString();
 
-  await lib.requestAPI(
+  await lib.executeSQL(
     "/get_userInfo",
     DBConfig,
     sql,
     {
       token: req.body["access_token"] ? req.body["access_token"] : null,
     },
-    res
+    (response) => {
+      res.send(response.rows);
+    },
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
@@ -38,14 +43,19 @@ router.route("/get_roomList_info").post(async (req, res) => {
     .readFileSync(path.resolve(__dirname, "../sql/chat/get_roomList_info.sql"))
     .toString();
 
-  await lib.requestAPI(
+  await lib.executeSQL(
     "/get_roomList_info",
     DBConfig,
     sql,
     {
       account_uid: req.body["account_uid"] ? req.body["account_uid"] : null,
     },
-    res
+    (response) => {
+      res.send(response.rows);
+    },
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
@@ -55,7 +65,7 @@ router.route("/qry_memberList").post(async (req, res) => {
     .readFileSync(path.resolve(__dirname, "../sql/chat/qry_memberList.sql"))
     .toString();
 
-  await lib.requestAPI(
+  await lib.executeSQL(
     "/qry_memberList",
     DBConfig,
     sql,
@@ -65,7 +75,12 @@ router.route("/qry_memberList").post(async (req, res) => {
         ? req.body["searchAccount"]
         : null,
     },
-    res
+    (response) => {
+      res.send(response.rows);
+    },
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
@@ -75,14 +90,19 @@ router.route("/qry_chat_name").post(async (req, res) => {
     .readFileSync(path.resolve(__dirname, "../sql/chat/qry_chat_name.sql"))
     .toString();
 
-  await lib.requestAPI(
+  await lib.executeSQL(
     "/qry_chat_name",
     DBConfig,
     sql,
     {
       account_uid: req.body["account_uid"] ? req.body["account_uid"] : null,
     },
-    res
+    (response) => {
+      res.send(response.rows);
+    },
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
@@ -94,14 +114,19 @@ router.route("/get_groupMemberList").post(async (req, res) => {
     )
     .toString();
 
-  await lib.requestAPI(
+  await lib.executeSQL(
     "/get_groupMemberList",
     DBConfig,
     sql,
     {
       account_uid: req.body["account_uid"] ? req.body["account_uid"] : null,
     },
-    res
+    (response) => {
+      res.send(response.rows);
+    },
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
@@ -111,14 +136,19 @@ router.route("/get_message").post(async (req, res) => {
     .readFileSync(path.resolve(__dirname, "../sql/chat/get_message.sql"))
     .toString();
 
-  await lib.requestAPI(
+  await lib.executeSQL(
     "/get_message",
     DBConfig,
     sql,
     {
       message_id: req.body["message_id"] ? req.body["message_id"] : null,
     },
-    res
+    (response) => {
+      res.send(response.rows);
+    },
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
@@ -130,14 +160,19 @@ router.route("/get_room_current_messages").post(async (req, res) => {
     )
     .toString();
 
-  await lib.requestAPI(
+  await lib.executeSQL(
     "/get_room_current_messages",
     DBConfig,
     sql,
     {
       room_id: req.body["room_id"] ? req.body["room_id"] : null,
     },
-    res
+    (response) => {
+      res.send(response.rows);
+    },
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
@@ -149,7 +184,7 @@ router.route("/get_room_scroll_up_messages").post(async (req, res) => {
     )
     .toString();
 
-  await lib.requestAPI(
+  await lib.executeSQL(
     "/get_room_scroll_up_messages",
     DBConfig,
     sql,
@@ -157,7 +192,12 @@ router.route("/get_room_scroll_up_messages").post(async (req, res) => {
       room_id: req.body["room_id"] ? req.body["room_id"] : null,
       message_id: req.body["message_id"] ? req.body["message_id"] : null,
     },
-    res
+    (response) => {
+      res.send(response.rows);
+    },
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
@@ -169,7 +209,7 @@ router.route("/get_room_scroll_down_messages").post(async (req, res) => {
     )
     .toString();
 
-  await lib.requestAPI(
+  await lib.executeSQL(
     "/get_room_scroll_down_messages",
     DBConfig,
     sql,
@@ -177,7 +217,12 @@ router.route("/get_room_scroll_down_messages").post(async (req, res) => {
       room_id: req.body["room_id"] ? req.body["room_id"] : null,
       message_id: req.body["message_id"] ? req.body["message_id"] : null,
     },
-    res
+    (response) => {
+      res.send(response.rows);
+    },
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
@@ -187,7 +232,7 @@ router.route("/get_message_state").post(async (req, res) => {
     .readFileSync(path.resolve(__dirname, "../sql/chat/get_message_state.sql"))
     .toString();
 
-  await lib.requestAPI(
+  await lib.executeSQL(
     "/get_message_state",
     DBConfig,
     sql,
@@ -195,7 +240,12 @@ router.route("/get_message_state").post(async (req, res) => {
       room_id: req.body["room_id"] ? req.body["room_id"] : null,
       message_id: req.body["message_id"] ? req.body["message_id"] : null,
     },
-    res
+    (response) => {
+      res.send(response.rows);
+    },
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
@@ -207,7 +257,7 @@ router.route("/get_room_search_keyword").post(async (req, res) => {
     )
     .toString();
 
-  await lib.requestAPI(
+  await lib.executeSQL(
     "/get_room_search_keyword",
     DBConfig,
     sql,
@@ -215,7 +265,12 @@ router.route("/get_room_search_keyword").post(async (req, res) => {
       room_id: req.body["room_id"] ? req.body["room_id"] : null,
       keyWord: req.body["keyWord"] ? req.body["keyWord"] : null,
     },
-    res
+    (response) => {
+      res.send(response.rows);
+    },
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
@@ -227,7 +282,7 @@ router.route("/get_room_keyword_seq_messages").post(async (req, res) => {
     )
     .toString();
 
-  await lib.requestAPI(
+  await lib.executeSQL(
     "/get_room_keyword_seq_messages",
     DBConfig,
     sql,
@@ -238,7 +293,12 @@ router.route("/get_room_keyword_seq_messages").post(async (req, res) => {
         ? req.body["current_firsy_message_id"]
         : null,
     },
-    res
+    (response) => {
+      res.send(response.rows);
+    },
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
@@ -250,14 +310,19 @@ router.route("/get_room_image_message").post(async (req, res) => {
     )
     .toString();
 
-  await lib.requestAPI(
+  await lib.executeSQL(
     "/get_room_image_message",
     DBConfig,
     sql,
     {
       room_id: req.body["room_id"] ? req.body["room_id"] : null,
     },
-    res
+    (response) => {
+      res.send(response.rows);
+    },
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
@@ -269,14 +334,19 @@ router.route("/get_room_file_message").post(async (req, res) => {
     )
     .toString();
 
-  await lib.requestAPI(
+  await lib.executeSQL(
     "/get_room_file_message",
     DBConfig,
     sql,
     {
       room_id: req.body["room_id"] ? req.body["room_id"] : null,
     },
-    res
+    (response) => {
+      res.send(response.rows);
+    },
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
@@ -288,34 +358,65 @@ router.route("/get_room_group_member").post(async (req, res) => {
     )
     .toString();
 
-  await lib.requestAPI(
+  await lib.executeSQL(
     "/get_room_group_member",
     DBConfig,
     sql,
     {
       room_id: req.body["room_id"] ? req.body["room_id"] : null,
     },
-    res
+    (response) => {
+      res.send(response.rows);
+    },
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
 router.route("/create_room").post(async (req, res) => {
   let DBConfig = req.headers.factory ? DataBaseInfo[req.headers.factory] : {};
-  let sql = fs
+  let create_room_sql = fs
     .readFileSync(path.resolve(__dirname, "../sql/chat/create_room.sql"))
     .toString();
-  await lib.requestAPI(
+  let insert_room_member_sql = fs
+    .readFileSync(path.resolve(__dirname, "../sql/chat/insert_room_member.sql"))
+    .toString();
+
+  let list = [
+    {
+      sql: create_room_sql,
+      parameter: {
+        room_id: req.body["room_id"] ? req.body["room_id"] : null,
+        room_name: req.body["room_name"] ? req.body["room_name"] : null,
+        is_group: req.body["is_group"] ? req.body["is_group"] : null,
+        create_user: req.body["create_user"] ? req.body["create_user"] : null,
+      },
+    },
+  ];
+
+  let member = req.body["room_member"] ? req.body["room_member"] : [];
+  for (let index = 0; index < member.length; index++) {
+    list.push({
+      sql: insert_room_member_sql,
+      parameter: {
+        room_id: req.body["room_id"] ? req.body["room_id"] : null,
+        room_member: member[index],
+        create_user: req.body["create_user"] ? req.body["create_user"] : null,
+      },
+    });
+  }
+
+  await lib.executeSQLs(
     "/create_room",
     DBConfig,
-    sql,
-    {
-      room_member: req.body["room_member"] ? req.body["room_member"] : null,
-      room_id: req.body["room_id"] ? req.body["room_id"] : null,
-      room_name: req.body["room_name"] ? req.body["room_name"] : null,
-      is_group: req.body["is_group"] ? req.body["is_group"] : null,
-      create_user: req.body["create_user"] ? req.body["create_user"] : null,
+    list,
+    (response) => {
+      res.send(response);
     },
-    res
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
@@ -326,7 +427,7 @@ router.route("/insert_room_message").post(async (req, res) => {
       path.resolve(__dirname, "../sql/chat/insert_room_message.sql")
     )
     .toString();
-  await lib.requestAPI(
+  await lib.executeSQL(
     "/insert_room_message",
     DBConfig,
     sql,
@@ -343,46 +444,107 @@ router.route("/insert_room_message").post(async (req, res) => {
         ? req.body["reply_message_id"]
         : null,
     },
-    res
+    (response) => {
+      res.send(response);
+    },
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
-router.route("/update_message_read").post(async (req, res) => {
+router.route("/insert_message_have_read").post(async (req, res) => {
   let DBConfig = req.headers.factory ? DataBaseInfo[req.headers.factory] : {};
   let sql = fs
     .readFileSync(
-      path.resolve(__dirname, "../sql/chat/update_message_read.sql")
+      path.resolve(__dirname, "../sql/chat/insert_message_have_read.sql")
     )
     .toString();
-  await lib.requestAPI(
-    "/update_message_read",
+  await lib.executeSQL(
+    "/insert_message_have_read",
     DBConfig,
     sql,
     {
       room_id: req.body["room_id"] ? req.body["room_id"] : null,
       account_uid: req.body["account_uid"] ? req.body["account_uid"] : null,
     },
-    res
+    (response) => {
+      res.send(response);
+    },
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
 router.route("/update_room_group_info").post(async (req, res) => {
   let DBConfig = req.headers.factory ? DataBaseInfo[req.headers.factory] : {};
-  let sql = fs
+  let update_room_group_info_sql = fs
     .readFileSync(
       path.resolve(__dirname, "../sql/chat/update_room_group_info.sql")
     )
     .toString();
-  await lib.requestAPI(
+
+  let delete_chat_room_member_sql = fs
+    .readFileSync(
+      path.resolve(__dirname, "../sql/chat/delete_chat_room_member.sql")
+    )
+    .toString();
+
+  let insert_room_member_sql = fs
+    .readFileSync(path.resolve(__dirname, "../sql/chat/insert_room_member.sql"))
+    .toString();
+
+  let room_member_array = req.body["room_member"]
+    ? req.body["room_member"]
+    : null;
+  let room_member = "";
+
+  let list = [
+    {
+      sql: update_room_group_info_sql,
+      parameter: {
+        room_name: req.body["room_name"] ? req.body["room_name"] : null,
+        create_user: req.body["account_uid"] ? req.body["account_uid"] : null,
+        room_id: req.body["room_id"] ? req.body["room_id"] : null,
+      },
+    },
+  ];
+
+  for (let index = 0; index < room_member_array.length; index++) {
+    room_member += room_member_array[index] + ",";
+    list.push({
+      sql: insert_room_member_sql,
+      parameter: {
+        room_id: req.body["room_id"] ? req.body["room_id"] : null,
+        room_member: room_member_array[index],
+        create_user: req.body["account_uid"] ? req.body["account_uid"] : null,
+      },
+    });
+  }
+
+  if (room_member.length > 0) {
+    room_member = room_member.substring(0, room_member.length - 1);
+  }
+
+  list.push({
+    sql: delete_chat_room_member_sql,
+    parameter: {
+      room_id: req.body["room_id"] ? req.body["room_id"] : null,
+      room_member: room_member,
+    },
+  });
+
+  await lib.executeSQLs(
     "/update_room_group_info",
     DBConfig,
-    sql,
-    {
-      room_id: req.body["room_id"] ? req.body["room_id"] : null,
-      room_name: req.body["room_name"] ? req.body["room_name"] : null,
-      room_member: req.body["room_member"] ? req.body["room_member"] : null,
+    list,
+    (response) => {
+      res.send(response);
     },
-    res
+    (error) => {
+      res.status(400).json({ error: error });
+    }
   );
 });
 
@@ -394,7 +556,7 @@ router.route("/upload_file").post(async (req, res) => {
       .toString();
 
     const server = new Server({
-      basicAuth: { password: "deanshoes.dsit.rd", username: "dsit.rd" },
+      basicAuth: { username: "dsit.rd", password: "deanshoes.dsit.rd" },
       url: "http://10.1.1.231/",
     });
     const client = new Client(server);
@@ -434,12 +596,90 @@ router.route("/upload_file").post(async (req, res) => {
         size: req.files[index.toLocaleString()].size,
       };
       filelink.push(fileInfo);
-      await lib.requestAPI("/insert_file", DBConfig, sql, fileInfo, null);
+      await lib.executeSQL(
+        "/insert_file",
+        DBConfig,
+        sql,
+        fileInfo,
+        null,
+        (error) => {
+          res.status(400).json({ error: error });
+        }
+      );
     }
-
     res.send(filelink);
   } catch (error) {
     console.log(error);
+  }
+});
+
+router.route("/retract_message").post(async (req, res) => {
+  let DBConfig = req.headers.factory ? DataBaseInfo[req.headers.factory] : {};
+  let update_retract_message_sql = fs
+    .readFileSync(
+      path.resolve(__dirname, "../sql/chat/update_retract_message.sql")
+    )
+    .toString();
+  let delete_file_sql = fs
+    .readFileSync(path.resolve(__dirname, "../sql/chat/delete_file.sql"))
+    .toString();
+  let file = req.body["file_id"] ? req.body["file_id"] : null;
+  if (file) {
+    const server = new Server({
+      basicAuth: { username: "dsit.rd", password: "deanshoes.dsit.rd" },
+      url: "http://10.1.1.231/",
+    });
+    const client = new Client(server);
+    let path = req.body["path"] ? req.body["path"] : null;
+    await client.deleteFile(path);
+
+    await lib.executeSQLs(
+      "/retract_message",
+      DBConfig,
+      [
+        {
+          sql: update_retract_message_sql,
+          parameter: {
+            message_content: req.body["message_content"]
+              ? req.body["message_content"]
+              : null,
+            room_id: req.body["room_id"] ? req.body["room_id"] : null,
+            message_id: req.body["message_id"] ? req.body["message_id"] : null,
+          },
+        },
+        {
+          sql: delete_file_sql,
+          parameter: {
+            file_id: req.body["file_id"] ? req.body["file_id"] : null,
+          },
+        },
+      ],
+      (response) => {
+        res.send(response);
+      },
+      (error) => {
+        res.status(400).json({ error: error });
+      }
+    );
+  } else {
+    await lib.executeSQL(
+      "/retract_message",
+      DBConfig,
+      update_retract_message_sql,
+      {
+        message_content: req.body["message_content"]
+          ? req.body["message_content"]
+          : null,
+        room_id: req.body["room_id"] ? req.body["room_id"] : null,
+        message_id: req.body["message_id"] ? req.body["message_id"] : null,
+      },
+      (response) => {
+        res.send(response);
+      },
+      (error) => {
+        res.status(400).json({ error: error });
+      }
+    );
   }
 });
 

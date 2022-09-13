@@ -7,7 +7,12 @@ class library {
       ([sql, array, index], [key, value]) => [
         sql.replaceAll(
           "${" + `${key}` + "}",
-          value === null ? null : `'${value}'`
+          value === null
+            ? null
+            : (value[0] === "'" && value[value.length - 1] === "'") ||
+                (value[0] == '"' && value[value.length - 1] === '"'
+                  ? value
+                  : `'${value}'`)
         ),
         [...array, value],
         index + 1,
@@ -17,41 +22,7 @@ class library {
     return { text };
   }
 
-  async requestAPI(path, config, sql, parameter, res) {
-    try {
-      let pool = new pg.Pool(config);
-      const client = await pool.connect();
-      try {
-        let result = await client.query(this.queryConvert(sql, parameter));
-        if (res) {
-          await res.send(result.rows);
-        } else {
-          return result.rows;
-        }
-      } catch (error) {
-        console.error(path);
-        logger.error(path, config, parameter, error);
-        if (res) {
-          await res.status(400).json({ error: error });
-        } else {
-          return { error: error };
-        }
-      } finally {
-        client.release();
-        pool.end();
-      }
-    } catch (err) {
-      console.error(path);
-      logger.error(path, config, parameter, err);
-      if (res) {
-        await res.status(400).json({ error: err });
-      } else {
-        return { error: err };
-      }
-    }
-  }
-
-  async executeAPI(path, config, sql, parameter, res) {
+  async executeSQL(path, config, sql, parameter, callback, errorCallback) {
     try {
       let pool = new pg.Pool(config);
       const client = await pool.connect();
@@ -65,17 +36,17 @@ class library {
             );
           }
           await client.query("COMMIT");
-          if (res) {
-            await res.send(result);
+          if (callback) {
+            await callback(result);
           } else {
             return result;
           }
         } catch (err) {
-          console.error(path);
-          logger.error(path, config, err);
+          console.error(path, config);
+          logger.error(path, config, sql, parameter, err);
           await client.query("ROLLBACK");
-          if (res) {
-            await res.status(400).json({ error: err });
+          if (errorCallback) {
+            await errorCallback({ error: err });
           } else {
             return { error: err };
           }
@@ -88,17 +59,17 @@ class library {
           await client.query("BEGIN");
           const result = await client.query(this.queryConvert(sql, parameter));
           await client.query("COMMIT");
-          if (res) {
-            await res.send(result);
+          if (callback) {
+            await callback(result);
           } else {
             return result;
           }
         } catch (err) {
-          console.error(path);
-          logger.error(path, config, err);
+          console.error(path, config);
+          logger.error(path, config, sql, parameter, err);
           await client.query("ROLLBACK");
-          if (res) {
-            await res.status(400).json({ error: err });
+          if (errorCallback) {
+            await errorCallback({ error: err });
           } else {
             return { error: err };
           }
@@ -108,17 +79,17 @@ class library {
         }
       }
     } catch (err) {
-      console.error(path);
-      logger.error(path, config, parameter, err);
-      if (res) {
-        await res.status(400).json({ error: err });
+      console.error(path, config);
+      logger.error(path, config, sql, parameter, err);
+      if (errorCallback) {
+        await errorCallback({ error: err });
       } else {
         return { error: err };
       }
     }
   }
 
-  async executeAPIs(path, config, executeList, res) {
+  async executeSQLs(path, config, executeList, callback, errorCallback) {
     try {
       let pool = new pg.Pool(config);
       const client = await pool.connect();
@@ -145,17 +116,17 @@ class library {
           }
         }
         await client.query("COMMIT");
-        if (res) {
-          await res.send(result);
+        if (callback) {
+          await callback(result);
         } else {
           return result;
         }
       } catch (err) {
-        console.error(path);
-        logger.error(path, config, err);
+        console.error(path, config);
+        logger.error(path, config, executeList, err);
         await client.query("ROLLBACK");
-        if (res) {
-          await res.status(400).json({ error: err });
+        if (errorCallback) {
+          await errorCallback({ error: err });
         } else {
           return { error: err };
         }
@@ -164,10 +135,10 @@ class library {
         pool.end();
       }
     } catch (err) {
-      console.error(path);
-      logger.error(path, config, parameter, err);
-      if (res) {
-        await res.status(400).json({ error: err });
+      console.error(path, config);
+      logger.error(path, config, executeList, err);
+      if (errorCallback) {
+        await errorCallback({ error: err });
       } else {
         return { error: err };
       }

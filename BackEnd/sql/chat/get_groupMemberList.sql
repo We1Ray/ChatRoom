@@ -1,6 +1,6 @@
 select
 	account_uid,
-	name || ' (' || account || ')' name
+	name || ' (' || account || ')' "name"
 from
 	accounts a
 where

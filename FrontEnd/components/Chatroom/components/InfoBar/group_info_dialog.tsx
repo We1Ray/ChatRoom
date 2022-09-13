@@ -125,7 +125,7 @@ const Group_info_dialog: React.FC<Group_info_dialog> = ({
   }
 
   function insert_system_room_add_remove_message(
-    roomMember: string,
+    roomMember: string[],
     newName: string
   ) {
     let addMember = selectGroupMember.filter(
@@ -201,8 +201,10 @@ ${removeMessage}`
 
   function updateRoomInfo() {
     let roomMember = "";
+    let roomMemberAccountUid = [];
     for (let index = 0; index < selectGroupMember.length; index++) {
       roomMember += selectGroupMember[index].account_uid + ";";
+      roomMemberAccountUid.push(selectGroupMember[index].account_uid);
     }
     roomMember = roomMember.substring(0, roomMember.length - 1);
     CallApi.ExecuteApi(
@@ -211,7 +213,8 @@ ${removeMessage}`
       {
         room_id: room.room_id,
         room_name: groupName,
-        room_member: roomMember,
+        room_member: roomMemberAccountUid,
+        account_uid: user.account_uid,
       }
     )
       .then((res) => {
@@ -231,7 +234,10 @@ ${removeMessage}`
             )
               .then((res) => {
                 if (res.status === 200) {
-                  insert_system_room_add_remove_message(roomMember, newName);
+                  insert_system_room_add_remove_message(
+                    roomMemberAccountUid,
+                    newName
+                  );
                 }
               })
               .catch((error) => {
@@ -239,7 +245,10 @@ ${removeMessage}`
                 console.log(error);
               });
           } else {
-            insert_system_room_add_remove_message(roomMember, newName);
+            insert_system_room_add_remove_message(
+              roomMemberAccountUid,
+              newName
+            );
           }
         }
       })

@@ -50,7 +50,7 @@ export default function Room({ roomList, setRoom, room }) {
                     >
                       {object.room_name}
                       {object.is_group === "Y"
-                        ? "(" + object.room_member.split(";").length + ")"
+                        ? "(" + object.room_member.length + ")"
                         : ""}
                     </span>
 
