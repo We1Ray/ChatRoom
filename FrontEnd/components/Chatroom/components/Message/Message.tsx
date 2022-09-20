@@ -8,6 +8,7 @@ import {
   Row,
   Column,
   DraggableDialog,
+  SystemFunc,
 } from "../../../../resource";
 import {
   messageProps,
@@ -20,6 +21,8 @@ import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";
 
 interface Props {
   message: messageProps;
+  messageKey: string;
+  socket: any;
   previousMessage?: messageProps;
   user: userProps;
   users: usersProps[];
@@ -27,13 +30,14 @@ interface Props {
   searchedMessage?: messageProps;
   searchedMessagesList?: messageProps[];
   replyMessage?: (message: messageProps) => any;
-  retractMessage?: (message: messageProps) => any;
   clickReplyMessage?: messageProps;
   setClickReplyMessage?: (message: messageProps) => any;
 }
 
 const Message: React.FC<Props> = ({
   message,
+  messageKey,
+  socket,
   previousMessage,
   user,
   users,
@@ -41,11 +45,11 @@ const Message: React.FC<Props> = ({
   searchedMessage,
   searchedMessagesList,
   replyMessage,
-  retractMessage,
   clickReplyMessage,
   setClickReplyMessage,
 }) => {
   const { System } = useContext(SystemContext);
+  const [key, setKey] = useState(messageKey);
   const [thisMessage, setThisMessage] = useState(message);
   const [isRead, setIsRead] = useState(message ? parseInt(message.isread) : 0);
   const [messageClassType, setMessageClassType] = useState({});
@@ -56,6 +60,16 @@ const Message: React.FC<Props> = ({
   const [reply_Message, setReply_Message] = useState<messageProps>(null);
 
   const messageRef = useRef(null);
+  const oneDay = 24 * 60 * 60 * 1000;
+
+  useEffect(() => {
+    socket.on("retractMessage", ({ retractMessage, userInfo, socket_user }) => {
+      if (retractMessage.message_id === message.message_id) {
+        setThisMessage(retractMessage);
+        setKey("Msg-" + SystemFunc.uuid());
+      }
+    });
+  }, [JSON.stringify(users)]);
 
   useEffect(() => {
     setThisMessage(message);
@@ -304,12 +318,14 @@ const Message: React.FC<Props> = ({
         )
           .then((res) => {
             if (res.status === 200) {
-              setThisMessage((prev) => {
-                prev.message_content = user.name + "已收回訊息";
-                prev.send_member = "system";
-                return prev;
+              let retractMessage = message;
+              retractMessage.message_content = user.name + "已收回訊息";
+              retractMessage.send_member = "system";
+
+              socket.emit("retractMessage", {
+                retractMessage: retractMessage,
+                userInfo: user,
               });
-              retractMessage(thisMessage);
             } else {
               console.log(res);
             }
@@ -332,7 +348,7 @@ const Message: React.FC<Props> = ({
   }
 
   return thisMessage.send_member === user.account_uid ? (
-    <div className="messageContainer justifyEnd" ref={messageRef}>
+    <div className="messageContainer justifyEnd" ref={messageRef} key={key}>
       <p
         style={{
           display: "flex",
@@ -363,11 +379,17 @@ const Message: React.FC<Props> = ({
             &ensp;
             {"回復訊息"}
           </MenuItem>
-          <MenuItem data={{ action: "retract" }} onClick={handleContextClick}>
-            <em className="fas fa-comment-slash" />
-            &ensp;
-            {"收回訊息"}
-          </MenuItem>
+          {new Date().getTime() -
+            new Date(message.d + " " + message.hm).getTime() <=
+          oneDay ? (
+            <MenuItem data={{ action: "retract" }} onClick={handleContextClick}>
+              <em className="fas fa-comment-slash" />
+              &ensp;
+              {"收回訊息"}
+            </MenuItem>
+          ) : (
+            <None />
+          )}
         </ContextMenu>
         <DraggableDialog open={dialogOn}>
           <DialogActions>
@@ -492,6 +514,7 @@ const Message: React.FC<Props> = ({
         <div
           className="messageContainer"
           ref={messageRef}
+          key={key}
           style={{ display: "flex", justifyContent: "center" }}
         >
           <div className="messageBox backgroundLight">
@@ -501,7 +524,11 @@ const Message: React.FC<Props> = ({
           </div>
         </div>
       ) : (
-        <div className="messageContainer justifyStart" ref={messageRef}>
+        <div
+          className="messageContainer justifyStart"
+          ref={messageRef}
+          key={key}
+        >
           <ContextMenu id={isLoading ? "loading" : thisMessage.message_id}>
             <MenuItem data={{ action: "copy" }} onClick={handleContextClick}>
               <em className="fas fa-clone" />
@@ -555,6 +582,36 @@ const Message: React.FC<Props> = ({
           &emsp;
           <div className="messageBox backgroundLight">
             <ContextMenuTrigger id={thisMessage.message_id}>
+              {reply_Message ? (
+                <>
+                  <div
+                    onClick={() => {
+                      setClickReplyMessage(reply_Message);
+                    }}
+                    style={{
+                      color: "#D4D4D4",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {reply_Message.send_member_name +
+                      ":" +
+                      (reply_Message.message_content.length > 50
+                        ? reply_Message.message_content.substring(0, 49) +
+                          " ....."
+                        : reply_Message.message_content)}
+                  </div>
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "1px",
+                      borderTop: "solid #ACC0D8 1px",
+                      borderColor: "#D4D4D4",
+                    }}
+                  />
+                </>
+              ) : (
+                <None />
+              )}
               {file ? (
                 isImage ? (
                   <img

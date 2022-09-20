@@ -72,7 +72,7 @@ const chatSever = (io) => {
       }
     });
 
-    socket.on("retractMessage", ({ room, retractMessage, userInfo }) => {
+    socket.on("retractMessage", ({retractMessage, userInfo }) => {
       const user = getUser(socket.id); //we havve access to socket from above
       if (!user) {
         const { error, user } = addUser({
@@ -109,6 +109,13 @@ const chatSever = (io) => {
           socket_user: socket.id,
         });
       }
+    });
+
+    socket.on("updateRoomMember", ({ room }) => {
+      io.to(room.room_id).emit("updateRoomMember", {
+        room: room,
+        socket_user: socket.id,
+      });
     });
 
     //does not take any parameters since we are just unmounting here

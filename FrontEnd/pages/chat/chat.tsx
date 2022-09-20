@@ -436,17 +436,17 @@ function ChatRoom_Content() {
             </Collapse>
           </Column>
           <Column md={9}>
-            {roomKey !== "" ? (
-              <div style={{ height: "800px", padding: "10px" }} key={roomKey}>
+            <div style={{ height: "800px", padding: "10px" }} key={roomKey}>
+              {roomKey !== "" ? (
                 <Chat
                   user={user}
                   room={room}
                   updateGroupRoomInfo={updateGroupRoomInfo}
                 />
-              </div>
-            ) : (
-              <None />
-            )}
+              ) : (
+                <None />
+              )}
+            </div>
           </Column>
         </Row>
       </div>

@@ -155,7 +155,7 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
     socket = io(System.factory.ip);
     socket.emit("join", { room: room, userInfo: user }, (error: any) => {
       if (error) {
-        alert(error);
+        console.log(error);
       }
     });
 
@@ -322,17 +322,9 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
       }
     });
 
-    socket.on("retractMessage", ({ retractMessage, userInfo, socket_user }) => {
-      if (retractMessage.room_id === room.room_id) {
-        setMessages((prev) => {
-          let retractMessage_index = prev.findIndex(
-            (v) => v.message_id === retractMessage.message_id
-          );
-          prev[retractMessage_index].message_content =
-            prev[retractMessage_index].send_member_name + "已收回訊息";
-          prev[retractMessage_index].send_member = "system";
-          return prev;
-        });
+    socket.on("updateRoomMember", ({ room, socket_user }) => {
+      if (socket.id !== socket_user) {
+        updateGroupRoomInfo(room);
       }
     });
 
@@ -566,14 +558,6 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
     }
   };
 
-  const sendRetractMessage = (retractMessage: messageProps) => {
-    socket.emit("retractMessage", {
-      room: room,
-      retractMessage: retractMessage,
-      userInfo: user,
-    });
-  };
-
   const sendFileMessage = async (fileMessage: fileMessageProps) => {
     if (sendFileMessage) {
       let message_id = "Msg-" + SystemFunc.uuid();
@@ -803,6 +787,13 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
     }
   };
 
+  function chat_UpdateGroupRoomInfo(room: roomProps) {
+    socket.emit("updateRoomMember", {
+      room: room,
+    });
+    updateGroupRoomInfo(room);
+  }
+
   return (
     <div className="container">
       <InfoBar
@@ -818,7 +809,7 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
         searchedMessagesList={(searchedMessagesList) => {
           setSearchedMessagesList(searchedMessagesList);
         }}
-        updateGroupRoomInfo={updateGroupRoomInfo}
+        updateGroupRoomInfo={chat_UpdateGroupRoomInfo}
       />
       {messageLoading ? (
         <div className="message-loading">
@@ -845,6 +836,8 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
               )}
               <Message
                 message={message}
+                messageKey={"Msg-" + SystemFunc.uuid()}
+                socket={socket}
                 previousMessage={
                   i === 0
                     ? null
@@ -871,9 +864,6 @@ const Chat: React.FC<ChatProps> = ({ room, user, updateGroupRoomInfo }) => {
                 searchedMessagesList={searchedMessagesList}
                 replyMessage={(replyMessage) => {
                   setReplyMessage(replyMessage);
-                }}
-                retractMessage={(retractMessage) => {
-                  sendRetractMessage(retractMessage);
                 }}
                 clickReplyMessage={clickReplyMessage}
                 setClickReplyMessage={setClickReplyMessage}
